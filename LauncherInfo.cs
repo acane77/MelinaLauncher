@@ -282,17 +282,20 @@ namespace tbm_launcher
             this.Data = data;
 
             const int height = 30; // TODO: make it DPI-aware
+            const int text_offset = 3;
 
             Ctrl_Name = new Label();
+            Ctrl_Name.FlatStyle = FlatStyle.System;
             Name = Data.ToString();
-            Ctrl_Name.Location = new Point(0, height * ctrl_index);
+            Ctrl_Name.Location = new Point(0, height * ctrl_index + text_offset);
             Ctrl_Name.Width = 195;
             container.Controls.Add(Ctrl_Name);
 
             Ctrl_Status = new Label();
+            Ctrl_Status.FlatStyle = FlatStyle.System;
             Ctrl_Status.Text = "获取运行信息...";
             Ctrl_Status.ForeColor = Color.Gray;
-            Ctrl_Status.Location = new Point(200, height * ctrl_index);
+            Ctrl_Status.Location = new Point(200, height * ctrl_index + text_offset);
             if (Data.StatusCheckMethod != StatusCheckMethodEnum.NO_CHECK)
             {
                 container.Controls.Add(Ctrl_Status);
@@ -307,8 +310,9 @@ namespace tbm_launcher
             }
 
             Ctrl_Port = new Label();
+            Ctrl_Port.FlatStyle = FlatStyle.System;
             Port = data.PortNumber;
-            Ctrl_Port.Location = new Point(300, height * ctrl_index);
+            Ctrl_Port.Location = new Point(300, height * ctrl_index + text_offset);
             Ctrl_Port.Width = 50;
             Ctrl_Port.Click += (object s, EventArgs e) =>
             {

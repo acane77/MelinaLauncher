@@ -47,7 +47,8 @@ namespace tbm_launcher
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(13, 40);
+            this.label1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.label1.Location = new System.Drawing.Point(17, 40);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(86, 31);
@@ -98,7 +99,8 @@ namespace tbm_launcher
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(13, 13);
+            this.label3.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.label3.Location = new System.Drawing.Point(17, 13);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(62, 31);
@@ -224,7 +226,7 @@ namespace tbm_launcher
             this.Name = "FormConfigure";
             this.ShowIcon = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = ProgramGlobalConfig.DefaultApplicationTitle + " - Configure";
+            this.Text = "Melina Launcher - Configure";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormConfigure_FormClosed);
             this.Load += new System.EventHandler(this.FormConfigure_Load);
             this.ResumeLayout(false);

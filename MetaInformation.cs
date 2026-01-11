@@ -63,6 +63,7 @@ namespace tbm_launcher
             MetaInformation<ValueType> settingItem = this;
             Label labelConfigName = new Label();
             labelConfigName.Text = settingItem.FriendlyConfigName;
+            labelConfigName.FlatStyle = FlatStyle.System;
             labelConfigName.Location = new Point(baseTitleLeft, baseHeight + 3);
             labelConfigName.Size = new Size(baseValueLeft - baseTitleLeft, 22);
             container.Controls.Add(labelConfigName);
@@ -128,6 +129,7 @@ namespace tbm_launcher
             {
                 CheckBox checkbox = new CheckBox();
                 valueControl = checkbox;
+                checkbox.FlatStyle = FlatStyle.System;
                 checkbox.Checked = value == "1";
                 checkbox.CheckedChanged += (object sender_, EventArgs e_) => {
                     settingItem.SetValueHandler(info, (sender_ as CheckBox).Checked ? "1" : "0");
