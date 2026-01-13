@@ -31,7 +31,7 @@ namespace tbm_launcher
             bool has_error = false;
             string err_msg = "配置文件存在以下错误：";
             if (!File.Exists(CONFIG_FILENAME))
-                File.Create(CONFIG_FILENAME);
+                File.Create(CONFIG_FILENAME).Close();
             try
             {
                 IniConfigReader configReader = new IniConfigReader(CONFIG_FILENAME);
