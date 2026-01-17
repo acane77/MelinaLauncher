@@ -161,6 +161,22 @@ namespace tbm_launcher
         public LaunchInfoData Data = new LaunchInfoData();
         private int status;
 
+        // 安全地执行UI操作（确保在UI线程上执行）
+        private void InvokeIfRequired(Action action)
+        {
+            if (Ctrl_ParentControl == null)
+                return;
+
+            if (Ctrl_ParentControl.InvokeRequired)
+            {
+                Ctrl_ParentControl.Invoke(action);
+            }
+            else
+            {
+                action();
+            }
+        }
+
         public string Command { get { return Data.Command; } }
         public string StopCommand { get { return Data.StopCommand; } }
         public int PortNumber { get { return Data.PortNumber; } }
@@ -174,13 +190,27 @@ namespace tbm_launcher
         public string Name
         {
             get { return Data.Name; }
-            set { Data.Name = value; Ctrl_Name.Text = Data.Name; }
+            set 
+            { 
+                Data.Name = value;
+                if (Ctrl_Name != null)
+                {
+                    InvokeIfRequired(() => { Ctrl_Name.Text = Data.Name; });
+                }
+            }
         }
 
         public int Port
         {
             get { return Data.PortNumber; }
-            set { Data.PortNumber = value; Ctrl_Port.Text = value.ToString(); }
+            set 
+            { 
+                Data.PortNumber = value;
+                if (Ctrl_Port != null)
+                {
+                    InvokeIfRequired(() => { Ctrl_Port.Text = value.ToString(); });
+                }
+            }
         }
 
         private int Status
@@ -188,89 +218,92 @@ namespace tbm_launcher
             get { return status; }
             set
             {
-                try
+                status = value;
+                InvokeIfRequired(() =>
                 {
-                    status = value;
-                    if (status == RunningStatus.RETERVING_RUNNING_STATUS)
+                    try
                     {
-                        Ctrl_Status.Text = "获取运行信息...";
-                        Ctrl_Launch.Show();
-                        Ctrl_Status.ForeColor = Color.Gray;
-                        Ctrl_Launch.Enabled = false;
-                        Ctrl_Launch.Text = "启动";
-                        if (StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK)
+                        if (status == RunningStatus.RETERVING_RUNNING_STATUS)
                         {
-                            Ctrl_Launch.Text = "打开";
+                            Ctrl_Status.Text = "获取运行信息...";
+                            Ctrl_Launch.Show();
+                            Ctrl_Status.ForeColor = Color.Gray;
+                            Ctrl_Launch.Enabled = false;
+                            Ctrl_Launch.Text = "启动";
+                            if (StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK)
+                            {
+                                Ctrl_Launch.Text = "打开";
+                            }
                         }
-                    }
-                    else if (status == RunningStatus.RUNNING)
-                    {
-                        Ctrl_Status.Text = "正在运行";
-                        Ctrl_Status.ForeColor = Color.Green;
-                        Ctrl_Launch.Enabled = true;
-                        Ctrl_Launch.Text = "停止";
-                    }
-                    else if (status == RunningStatus.STOPPED)
-                    {
-                        Ctrl_Status.Text = "已停止";
-                        Ctrl_Status.ForeColor = Color.Gray;
-                        Ctrl_Launch.Enabled = true;
-                        Ctrl_Launch.Text = "启动";
-                        Ctrl_InstallRequirement.Hide();
-                        if (StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK)
+                        else if (status == RunningStatus.RUNNING)
                         {
-                            Ctrl_Launch.Text = "打开";
+                            Ctrl_Status.Text = "正在运行";
+                            Ctrl_Status.ForeColor = Color.Green;
+                            Ctrl_Launch.Enabled = true;
+                            Ctrl_Launch.Text = "停止";
                         }
-                    }
-                    else if (status == RunningStatus.LACK_OF_DEPENDENCIES)
-                    {
-                        Ctrl_Status.Text = "缺少依赖";
-                        Ctrl_Status.ForeColor = Color.Red;
-                        Ctrl_Launch.Hide();
-                        Ctrl_InstallRequirement.Show();
-                    }
-                    else if (status == RunningStatus.PROCESSING)
-                    {
-                        Ctrl_Status.Text = "正在处理";
-                        Ctrl_Status.ForeColor = Color.Black;
-                        Ctrl_InstallRequirement.Hide();
-                        Ctrl_Launch.Enabled = false;
-                    }
-                    else if (status == RunningStatus.FAILED)
-                    {
-                        Ctrl_Status.Text = "运行失败";
-                        Ctrl_Launch.Text = "启动";
-                        Ctrl_Status.ForeColor = Color.Red;
-                        if (StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK)
+                        else if (status == RunningStatus.STOPPED)
                         {
-                            Ctrl_Launch.Text = "打开";
+                            Ctrl_Status.Text = "已停止";
+                            Ctrl_Status.ForeColor = Color.Gray;
+                            Ctrl_Launch.Enabled = true;
+                            Ctrl_Launch.Text = "启动";
+                            Ctrl_InstallRequirement.Hide();
+                            if (StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK)
+                            {
+                                Ctrl_Launch.Text = "打开";
+                            }
                         }
-                    }
-                    else if (status == RunningStatus.CONFIG_ERROR)
-                    {
-                        Ctrl_Status.Text = "配置文件错误";
-                        Ctrl_Status.ForeColor = Color.Red;
-                        Ctrl_Launch.Hide();
-                        Ctrl_InstallRequirement.Show();
-                    }
+                        else if (status == RunningStatus.LACK_OF_DEPENDENCIES)
+                        {
+                            Ctrl_Status.Text = "缺少依赖";
+                            Ctrl_Status.ForeColor = Color.Red;
+                            Ctrl_Launch.Hide();
+                            Ctrl_InstallRequirement.Show();
+                        }
+                        else if (status == RunningStatus.PROCESSING)
+                        {
+                            Ctrl_Status.Text = "正在处理";
+                            Ctrl_Status.ForeColor = Color.Black;
+                            Ctrl_InstallRequirement.Hide();
+                            Ctrl_Launch.Enabled = false;
+                        }
+                        else if (status == RunningStatus.FAILED)
+                        {
+                            Ctrl_Status.Text = "运行失败";
+                            Ctrl_Launch.Text = "启动";
+                            Ctrl_Status.ForeColor = Color.Red;
+                            if (StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK)
+                            {
+                                Ctrl_Launch.Text = "打开";
+                            }
+                        }
+                        else if (status == RunningStatus.CONFIG_ERROR)
+                        {
+                            Ctrl_Status.Text = "配置文件错误";
+                            Ctrl_Status.ForeColor = Color.Red;
+                            Ctrl_Launch.Hide();
+                            Ctrl_InstallRequirement.Show();
+                        }
 
-                    if (status == RunningStatus.RUNNING)
-                    {
-                        Ctrl_Port.ForeColor = Color.Blue;
-                        Ctrl_Port.Cursor = Cursors.Hand;
-                        Ctrl_Port.Font = new Font(Ctrl_ParentControl.Font, FontStyle.Underline);
+                        if (status == RunningStatus.RUNNING)
+                        {
+                            Ctrl_Port.ForeColor = Color.Blue;
+                            Ctrl_Port.Cursor = Cursors.Hand;
+                            Ctrl_Port.Font = new Font(Ctrl_ParentControl.Font, FontStyle.Underline);
+                        }
+                        else
+                        {
+                            Ctrl_Port.ForeColor = Color.Black;
+                            Ctrl_Port.Cursor = Cursors.Default;
+                            Ctrl_Port.Font = Ctrl_ParentControl.Font;
+                        }
                     }
-                    else
+                    catch (Exception)
                     {
-                        Ctrl_Port.ForeColor = Color.Black;
-                        Ctrl_Port.Cursor = Cursors.Default;
-                        Ctrl_Port.Font = Ctrl_ParentControl.Font;
+                        // Do nothing
                     }
-                }
-                catch (Exception)
-                {
-                    // Do nothing
-                }
+                });
             }
         }
 
@@ -456,6 +489,7 @@ namespace tbm_launcher
                 if (!reqSat) Status = RunningStatus.LACK_OF_DEPENDENCIES;
                 else Status = RunningStatus.STOPPED;
             });
+            th.IsBackground = true;
             th.Start();
         }
 
@@ -466,14 +500,16 @@ namespace tbm_launcher
             //string args = executable.Length == command.Length ? "" : command.Substring(executable.Length);
             try
             {
-                Process p = new Process();
-                p.StartInfo.FileName = "cmd.exe";
-                p.StartInfo.Arguments = "/c \"" + command.Replace("\\", "\\\\") + "\"";
-                p.StartInfo.CreateNoWindow = true;
-                p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                p.Start();
-                p.WaitForExit();
-                return p.ExitCode;
+                using (Process p = new Process())
+                {
+                    p.StartInfo.FileName = "cmd.exe";
+                    p.StartInfo.Arguments = "/c \"" + command.Replace("\\", "\\\\") + "\"";
+                    p.StartInfo.CreateNoWindow = true;
+                    p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    p.Start();
+                    p.WaitForExit();
+                    return p.ExitCode;
+                }
             }
             catch (Exception)
             {
@@ -488,39 +524,55 @@ namespace tbm_launcher
             Thread th2 = new Thread(() =>
             {
                 string identifier = "";
-                var p = new Process();
-                p.StartInfo.FileName = ("taskkill.exe");
-                p.StartInfo.CreateNoWindow = true;
-                p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                if (StatusCheckMethod == StatusCheckMethodEnum.CHECK_PORT_USAGE)
+                using (var p = new Process())
                 {
-                    TcpHelperUtil tcpHelper = new TcpHelperUtil();
-                    var details = tcpHelper.GetPortDetails(PortNumber);
-                    if (details.Item1)
-                        p.StartInfo.Arguments = "/pid " + details.Item2.ProcessID + " /f";
-                    identifier = details.Item2.ProcessID.ToString();
-                }
-                else if (StatusCheckMethod == StatusCheckMethodEnum.CHECK_EXECUTABLE_EXISTANCE)
-                {
-                    string program_name = Command.Split(" ".ToCharArray())[0].Split("\\/".ToCharArray()).Last().Trim();
-                    if (!program_name.EndsWith(".exe")) program_name += ".exe";
-                    if (ExecutableName.Trim().Length > 0)
+                    p.StartInfo.FileName = ("taskkill.exe");
+                    p.StartInfo.CreateNoWindow = true;
+                    p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    if (StatusCheckMethod == StatusCheckMethodEnum.CHECK_PORT_USAGE)
                     {
-                        program_name = ExecutableName.Trim();
+                        TcpHelperUtil tcpHelper = new TcpHelperUtil();
+                        var details = tcpHelper.GetPortDetails(PortNumber);
+                        if (details.Item1)
+                        {
+                            p.StartInfo.Arguments = "/pid " + details.Item2.ProcessID + " /f";
+                            identifier = details.Item2.ProcessID.ToString();
+                        }
+                        else
+                        {
+                            Status = RunningStatus.STOPPED;
+                            return;
+                        }
                     }
-                    p.StartInfo.Arguments = "/im " + program_name + " /f";
-                    identifier = program_name;
-                }
-                p.Start();
-                p.WaitForExit();
-                if (p.ExitCode == 0)
-                    Status = RunningStatus.STOPPED;
-                else
-                {
-                    MessageBox.Show(Ctrl_ParentControl.Parent, "执行该操作的时候发生了错误。\r\n可能是因为\r\n   (1)该程序已经停止运行\r\n   (2)该程序的启动命令并不包含实际执行的应用的名称\r\n\r\nreturn code: " + p.ExitCode + "\r\nidentifier: " + identifier, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    Status = RunningStatus.STOPPED;
+                    else if (StatusCheckMethod == StatusCheckMethodEnum.CHECK_EXECUTABLE_EXISTANCE)
+                    {
+                        string program_name = Command.Split(" ".ToCharArray())[0].Split("\\/".ToCharArray()).Last().Trim();
+                        if (!program_name.EndsWith(".exe")) program_name += ".exe";
+                        if (ExecutableName.Trim().Length > 0)
+                        {
+                            program_name = ExecutableName.Trim();
+                        }
+                        p.StartInfo.Arguments = "/im " + program_name + " /f";
+                        identifier = program_name;
+                    }
+                    p.Start();
+                    p.WaitForExit();
+                    if (p.ExitCode == 0)
+                        Status = RunningStatus.STOPPED;
+                    else
+                    {
+                        if (Ctrl_ParentControl != null)
+                        {
+                            InvokeIfRequired(() =>
+                            {
+                                MessageBox.Show(Ctrl_ParentControl.Parent, "执行该操作的时候发生了错误。\r\n可能是因为\r\n   (1)该程序已经停止运行\r\n   (2)该程序的启动命令并不包含实际执行的应用的名称\r\n\r\nreturn code: " + p.ExitCode + "\r\nidentifier: " + identifier, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            });
+                        }
+                        Status = RunningStatus.STOPPED;
+                    }
                 }
             });
+            th2.IsBackground = true;
             th2.Start();
         }
 
@@ -531,6 +583,7 @@ namespace tbm_launcher
                 Status = RunningStatus.PROCESSING;
                 ExecuteDeteched(Command.Replace("{port}", "" + PortNumber));
             });
+            th1.IsBackground = true;
             th1.Start();
         }
 
@@ -556,14 +609,21 @@ namespace tbm_launcher
                         int ret_code = ExecuteGetReturnCode(StopCommand);
                         if (ret_code != 0)
                         {
-                            MessageBox.Show(Ctrl_ParentControl.Parent,
-                                "执行该操作指定的命令时发生了错误。\r\n\r\nreturn code: " + ret_code, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            if (Ctrl_ParentControl != null)
+                            {
+                                InvokeIfRequired(() =>
+                                {
+                                    MessageBox.Show(Ctrl_ParentControl.Parent,
+                                        "执行该操作指定的命令时发生了错误。\r\n\r\nreturn code: " + ret_code, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                });
+                            }
                         }
                         else
                         {
                             Status = RunningStatus.STOPPED;
                         }
                     });
+                    th2.IsBackground = true;
                     th2.Start();
                 }
             }
@@ -592,7 +652,10 @@ namespace tbm_launcher
                 {
                     var result = client.BeginConnect(host, port, null, null);
                     var success = result.AsyncWaitHandle.WaitOne(timeout);
-                    client.EndConnect(result);
+                    if (success)
+                    {
+                        client.EndConnect(result);
+                    }
                     return success;
                 }
             }
@@ -608,29 +671,31 @@ namespace tbm_launcher
             //string args = executable.Length == command.Length ? "" : command.Substring(executable.Length);
             try
             {
-                Process p = new Process();
-                if (WorkingDirectory != null && WorkingDirectory.Length > 0)
+                using (Process p = new Process())
                 {
-                    p.StartInfo.WorkingDirectory = WorkingDirectory;
-                }
-                p.StartInfo.FileName = "cmd.exe";
-                p.StartInfo.Arguments = "/c \"" + command + "\"";
-                //MessageBox.Show(p.StartInfo.Arguments);
-                p.StartInfo.CreateNoWindow = true;
-                if (RunBackground)
-                    p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                p.Start();
-                Status = RunningStatus.RUNNING;
+                    if (WorkingDirectory != null && WorkingDirectory.Length > 0)
+                    {
+                        p.StartInfo.WorkingDirectory = WorkingDirectory;
+                    }
+                    p.StartInfo.FileName = "cmd.exe";
+                    p.StartInfo.Arguments = "/c \"" + command + "\"";
+                    //MessageBox.Show(p.StartInfo.Arguments);
+                    p.StartInfo.CreateNoWindow = true;
+                    if (RunBackground)
+                        p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    p.Start();
+                    Status = RunningStatus.RUNNING;
 
-                if (StatusCheckMethod != StatusCheckMethodEnum.NO_CHECK)
-                    p.WaitForExit();
-                if (p.ExitCode == 0 || manual_terminate)
-                {
-                    Status = RunningStatus.STOPPED;
-                    manual_terminate = false;
+                    if (StatusCheckMethod != StatusCheckMethodEnum.NO_CHECK)
+                        p.WaitForExit();
+                    if (p.ExitCode == 0 || manual_terminate)
+                    {
+                        Status = RunningStatus.STOPPED;
+                        manual_terminate = false;
+                    }
+                    else
+                        Status = RunningStatus.FAILED;
                 }
-                else
-                    Status = RunningStatus.FAILED;
             }
             catch
             {

@@ -146,11 +146,14 @@ namespace tbm_launcher
         void RenderConfigItemList()
         {
             listConfig.Items.Clear();
-            foreach (ServiceItemControlGroup info in IniConfigureList)
+            if (IniConfigureList != null)
             {
-                listConfig.Items.Add(info.Data);
+                foreach (ServiceItemControlGroup info in IniConfigureList)
+                {
+                    listConfig.Items.Add(info.Data);
+                }
             }
-            if (listConfig.Items.Count > 1)
+            if (listConfig.Items.Count > 0)
                 listConfig.SelectedIndex = 0;
         }
 
@@ -226,8 +229,9 @@ namespace tbm_launcher
             LaunchInfoData L = new LaunchInfoData();
             L.Name = newConfigName;
             int current_idx = listConfig.SelectedIndex;
-            listConfig.Items.Insert(listConfig.SelectedIndex + 1, L);
-            listConfig.SelectedIndex = current_idx + 1;
+            int insert_index = current_idx >= 0 ? current_idx + 1 : 0;
+            listConfig.Items.Insert(insert_index, L);
+            listConfig.SelectedIndex = insert_index;
             listConfig.Focus();
         }
 

@@ -19,7 +19,6 @@ namespace tbm_launcher
     {
         public Form1()
         {
-            CheckForIllegalCrossThreadCalls = false;
             InitializeComponent();
         }
 
@@ -31,7 +30,9 @@ namespace tbm_launcher
             bool has_error = false;
             string err_msg = "配置文件存在以下错误：";
             if (!File.Exists(CONFIG_FILENAME))
-                File.Create(CONFIG_FILENAME).Close();
+            {
+                using (File.Create(CONFIG_FILENAME)) { }
+            }
             try
             {
                 IniConfigReader configReader = new IniConfigReader(CONFIG_FILENAME);
@@ -57,8 +58,7 @@ namespace tbm_launcher
             {
                 MessageBox.Show("加载配置文件失败:" + ee.Message);
             }
-            Control.CheckForIllegalCrossThreadCalls = false;
- 
+
             if (ProgramGlobalConfig.StartWithConfigureFlag)
             {
                 button2_Click(null, null);
@@ -98,6 +98,7 @@ namespace tbm_launcher
                 foreach (ServiceItemControlGroup l in LI)
                     l.RetriveRunningInformation(true);
             });
+            th.IsBackground = true;
             th.Start();
         }
 
@@ -113,7 +114,7 @@ namespace tbm_launcher
             form.SystemTitle = Text;
             Hide();
             form.ShowDialog();
-            
+            Show();
         }
     }
 }

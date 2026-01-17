@@ -27,7 +27,14 @@ namespace tbm_launcher
 
         public IniConfigReader(string filename)
         {
-            content = File.ReadAllText(filename);
+            if (!File.Exists(filename))
+            {
+                content = "";
+            }
+            else
+            {
+                content = File.ReadAllText(filename);
+            }
         }
 
         public class ParseError : Exception
@@ -46,7 +53,7 @@ namespace tbm_launcher
 
         public void LoadConfig()
         {
-            string[] lines = content.Split("\n".ToCharArray());
+            string[] lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
             LaunchInfoData data = new LaunchInfoData();
 
@@ -67,9 +74,10 @@ namespace tbm_launcher
             foreach (string line in lines)
             {
                 line_no++;
-                if (line.Trim() == "")
+                string trimmedLine = line.Trim();
+                if (trimmedLine == "")
                     continue;
-                if (line.Trim()[0] == '[')
+                if (trimmedLine[0] == '[')
                 {
                     if (initialized)
                     {
@@ -83,12 +91,12 @@ namespace tbm_launcher
                     }
                     else
                         initialized = true;
-                    if (line.Trim() == "[SYSTEM]")
+                    if (trimmedLine == "[SYSTEM]")
                     {
                         is_system_config = true;
                     }
                     else is_system_config = false;
-                    data.Name = line.Replace("[", "").Replace("]", "");
+                    data.Name = trimmedLine.Replace("[", "").Replace("]", "");
                     data.Command = "";
                     data.PortNumber = 0;
                     data.RequirementCommand = "";
@@ -101,9 +109,11 @@ namespace tbm_launcher
                 }
                 if (is_system_config)
                 {
-                    string[] partsS = line.Split("=".ToCharArray());
+                    string[] partsS = line.Split(new[] { '=' }, 2);
+                    if (partsS.Length < 2)
+                        continue;
                     string settingNameS = partsS[0].Trim().ToLower();
-                    string valueS = line.Substring(partsS[0].Length + 1).Trim();
+                    string valueS = partsS[1].Trim();
                     switch (settingNameS)
                     {
                         case "title":
@@ -115,13 +125,14 @@ namespace tbm_launcher
                     continue;
                 }
                 // if (on_error) continue;
-                string[] parts = line.Split("=".ToCharArray(), 2);
+                string[] parts = line.Split(new[] { '=' }, 2);
                 if (parts.Length < 2)
                 {
                     EmitParseError("配置项格式错误");
+                    continue;
                 }
                 string settingName = parts[0].Trim().ToLower();
-                string value = line.Substring(parts[0].Length+1).Trim();
+                string value = parts[1].Trim();
                 try
                 {
                     data.SetFieldsFromString(settingName, value);

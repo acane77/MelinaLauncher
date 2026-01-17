@@ -151,25 +151,26 @@ namespace tbm_launcher
         private string ExecuteCommandAndCaptureOutput(string commandName, string arguments)
         {
             string commandOut = string.Empty;
-            Process process = new Process();
-            process.StartInfo.FileName = commandName;
-            process.StartInfo.Arguments = arguments;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.Start();
-
-            commandOut = process.StandardOutput.ReadToEnd();
-            string errors = process.StandardError.ReadToEnd();
-            try
+            using (Process process = new Process())
             {
-                process.WaitForExit(TimeSpan.FromSeconds(2).Milliseconds);
-            }
-            catch (Exception exp)
-            {
+                process.StartInfo.FileName = commandName;
+                process.StartInfo.Arguments = arguments;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.Start();
 
-                Console.WriteLine(exp.ToString());
+                commandOut = process.StandardOutput.ReadToEnd();
+                string errors = process.StandardError.ReadToEnd();
+                try
+                {
+                    process.WaitForExit((int)TimeSpan.FromSeconds(2).TotalMilliseconds);
+                }
+                catch (Exception exp)
+                {
+                    Console.WriteLine(exp.ToString());
+                }
             }
             return commandOut;
         }
