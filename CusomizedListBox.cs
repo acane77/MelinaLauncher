@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -138,6 +139,38 @@ namespace tbm_launcher
 
         internal ListBox.ObjectCollection OldItemSource => base.Items;
 
+        private bool CanSafelyUseHandle()
+        {
+            return !IsDisposed && !Disposing && IsHandleCreated;
+        }
+
+        private bool TryGetItemBounds(int index, out Rectangle bounds)
+        {
+            bounds = Rectangle.Empty;
+            if (index < 0 || index >= Items.Count || !CanSafelyUseHandle())
+            {
+                return false;
+            }
+
+            try
+            {
+                bounds = base.GetItemRectangle(index);
+                return true;
+            }
+            catch (Win32Exception)
+            {
+                return false;
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
         protected override void OnSelectedIndexChanged(EventArgs e)
         {
             base.OnSelectedIndexChanged(e);
@@ -146,9 +179,18 @@ namespace tbm_launcher
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
+            if (!CanSafelyUseHandle())
+            {
+                return;
+            }
+
             for (int i = 0; i < Items.Count; i++)
             {
-                Rectangle bounds = this.GetItemRectangle(i);
+                Rectangle bounds;
+                if (!TryGetItemBounds(i, out bounds))
+                {
+                    continue;
+                }
                 Rectangle deleteBounds = new Rectangle(bounds.Width - 28, (bounds.Height - 16) / 2 + bounds.Top, 16, 16);
 
                 if (bounds.Contains(e.X, e.Y))
@@ -179,6 +221,11 @@ namespace tbm_launcher
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            if (!CanSafelyUseHandle())
+            {
+                return;
+            }
+
             Graphics g = e.Graphics;
 
             // you can set SeletedItem background
@@ -189,8 +236,11 @@ namespace tbm_launcher
 
             for (int i = 0; i < Items.Count; i++)
             {
-                
-                Rectangle bounds = this.GetItemRectangle(i);
+                Rectangle bounds;
+                if (!TryGetItemBounds(i, out bounds))
+                {
+                    break;
+                }
 
                 if (this.SelectedItem == Items[i])
                 {
@@ -289,7 +339,7 @@ namespace tbm_launcher
 
         public void BeginEdit(int index)
         {
-            if (!EnableInlineStringEditing || index < 0 || index >= Items.Count)
+            if (!EnableInlineStringEditing || index < 0 || index >= Items.Count || !CanSafelyUseHandle())
             {
                 return;
             }
@@ -303,7 +353,11 @@ namespace tbm_launcher
             editingIndex = index;
             SelectedIndex = index;
 
-            Rectangle bounds = GetItemRectangle(index);
+            Rectangle bounds;
+            if (!TryGetItemBounds(index, out bounds))
+            {
+                return;
+            }
             inlineEditor.Bounds = new Rectangle(bounds.Left + 1, bounds.Top + 1, Math.Max(20, bounds.Width - 2), Math.Max(20, bounds.Height - 2));
             inlineEditor.Text = item.ToString();
             inlineEditor.Visible = true;
