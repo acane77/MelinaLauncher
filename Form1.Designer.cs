@@ -61,7 +61,7 @@
             // btn_stop
             // 
             this.btn_stop.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.btn_stop.Location = new System.Drawing.Point(332, 404);
+            this.btn_stop.Location = new System.Drawing.Point(363, 404);
             this.btn_stop.Name = "btn_stop";
             this.btn_stop.Size = new System.Drawing.Size(121, 31);
             this.btn_stop.TabIndex = 5;
@@ -72,7 +72,7 @@
             // btn_launch
             // 
             this.btn_launch.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.btn_launch.Location = new System.Drawing.Point(182, 404);
+            this.btn_launch.Location = new System.Drawing.Point(213, 404);
             this.btn_launch.Name = "btn_launch";
             this.btn_launch.Size = new System.Drawing.Size(144, 31);
             this.btn_launch.TabIndex = 0;
@@ -103,11 +103,12 @@
             this.buttonConfig.FlatAppearance.BorderSize = 0;
             this.buttonConfig.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Silver;
             this.buttonConfig.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonConfig.Location = new System.Drawing.Point(462, 411);
+            this.buttonConfig.Location = new System.Drawing.Point(494, 411);
             this.buttonConfig.Name = "buttonConfig";
             this.buttonConfig.Size = new System.Drawing.Size(16, 16);
             this.buttonConfig.TabIndex = 8;
             this.buttonConfig.UseVisualStyleBackColor = true;
+            this.buttonConfig.Visible = false;
             this.buttonConfig.Click += new System.EventHandler(this.button2_Click);
             // 
             // Form1
