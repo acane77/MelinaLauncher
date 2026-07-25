@@ -11,9 +11,49 @@ namespace tbm_launcher
     public partial class FormConfigure : Form
     {
         private readonly List<MetaInformation<LaunchInfoData>> settingItemConfigs = new List<MetaInformation<LaunchInfoData>>();
+        private readonly List<MetaInformation<SystemConfigData>> systemSettingConfigs = new List<MetaInformation<SystemConfigData>>();
         private LauncherAppConfig loadedConfig = new LauncherAppConfig();
+        private readonly SystemConfigData systemConfig = new SystemConfigData();
         private int LastSelectedConfigItem = -1;
         private const string CRLF = "\r\n";
+
+        private enum ConfigEditorEntryKind
+        {
+            System,
+            Service
+        }
+
+        private sealed class SystemConfigData
+        {
+            public string Title = string.Empty;
+
+            public string GetFieldValueString(string configName)
+            {
+                if (string.Equals(configName, "title", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Title;
+                }
+
+                return string.Empty;
+            }
+        }
+
+        private sealed class ConfigEditorEntry
+        {
+            public ConfigEditorEntryKind Kind;
+            public SystemConfigData SystemConfig;
+            public LaunchInfoData ServiceConfig;
+
+            public override string ToString()
+            {
+                if (Kind == ConfigEditorEntryKind.System)
+                {
+                    return "系统配置";
+                }
+
+                return ServiceConfig == null ? "<Unnamed>" : ServiceConfig.ToString();
+            }
+        }
 
         public FormConfigure()
         {
@@ -27,9 +67,11 @@ namespace tbm_launcher
         {
             InitializeConfigItem();
             LoadRawConfiguration();
+            textBox1.Visible = false;
+            textBox1.TabStop = false;
+            label3.Visible = false;
             RenderConfigItemList();
-            textBox1.Text = loadedConfig.Title;
-            Text = "Configure " + loadedConfig.Title;
+            UpdateWindowTitle();
         }
 
         private void FormConfigure_FormClosed(object sender, FormClosedEventArgs e)
@@ -40,17 +82,28 @@ namespace tbm_launcher
 
         private void listConfig_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (listConfig.SelectedIndex == -1)
+            ConfigEditorEntry entry = GetSelectedEditorEntry();
+            if (entry == null)
             {
                 panel_config.Controls.Clear();
                 return;
             }
 
             LastSelectedConfigItem = listConfig.SelectedIndex;
-            MetaInformation<LaunchInfoData>.RenderControlGroup(
-                settingItemConfigs,
-                listConfig.SelectedItem as LaunchInfoData,
-                panel_config);
+            if (entry.Kind == ConfigEditorEntryKind.System)
+            {
+                MetaInformation<SystemConfigData>.RenderControlGroup(
+                    systemSettingConfigs,
+                    entry.SystemConfig,
+                    panel_config);
+            }
+            else
+            {
+                MetaInformation<LaunchInfoData>.RenderControlGroup(
+                    settingItemConfigs,
+                    entry.ServiceConfig,
+                    panel_config);
+            }
         }
 
         private void btn_launch_Click(object sender, EventArgs e)
@@ -97,15 +150,22 @@ namespace tbm_launcher
             item.SectionName = LauncherConfigFile.CreateRandomSectionName(GetExistingSectionNames());
             int currentIndex = listConfig.SelectedIndex;
             int insertIndex = currentIndex >= 0 ? currentIndex + 1 : 0;
-            listConfig.Items.Insert(insertIndex, item);
+            listConfig.Items.Insert(insertIndex, CreateServiceEntry(item));
             listConfig.SelectedIndex = insertIndex;
             listConfig.Focus();
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            if (listConfig.SelectedIndex == -1)
+            ConfigEditorEntry entry = GetSelectedEditorEntry();
+            if (entry == null)
             {
+                return;
+            }
+
+            if (entry.Kind == ConfigEditorEntryKind.System)
+            {
+                MessageBox.Show("系统配置项不可删除");
                 return;
             }
 
@@ -163,22 +223,39 @@ namespace tbm_launcher
         private void move_copy_Click(object sender, EventArgs e)
         {
             listConfig.Focus();
-            if (listConfig.SelectedIndex == -1)
+            ConfigEditorEntry entry = GetSelectedEditorEntry();
+            if (entry == null || entry.Kind == ConfigEditorEntryKind.System)
             {
                 return;
             }
 
             int selectedIndex = listConfig.SelectedIndex;
-            LaunchInfoData source = listConfig.Items[selectedIndex] as LaunchInfoData;
+            LaunchInfoData source = entry.ServiceConfig;
             LaunchInfoData copy = source.Clone();
             copy.Name = copy.Name + " (Copy)";
             copy.SectionName = LauncherConfigFile.CreateRandomSectionName(GetExistingSectionNames());
-            listConfig.Items.Insert(selectedIndex + 1, copy);
+            listConfig.Items.Insert(selectedIndex + 1, CreateServiceEntry(copy));
             listConfig.SelectedIndex = selectedIndex + 1;
         }
 
         private void InitializeConfigItem()
         {
+            systemSettingConfigs.Clear();
+            systemSettingConfigs.Add(new MetaInformation<SystemConfigData>
+            {
+                ConfigName = "title",
+                FriendlyConfigName = "标题",
+                ConfigType = MetaInformation<SystemConfigData>.CONFIG_TYPE_STRING,
+                GetValueHandler = p => p.Title,
+                SetValueHandler = (p, val) =>
+                {
+                    p.Title = val;
+                    UpdateWindowTitle();
+                },
+                GetReferenceSectionNameHandler = p => ProgramGlobalConfig.SystemSectionName
+            });
+            MetaInformation<SystemConfigData>.ValueFillHandler = (configName, info) => info.GetFieldValueString(configName);
+
             settingItemConfigs.Clear();
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
@@ -316,11 +393,12 @@ namespace tbm_launcher
         private void RenderConfigItemList()
         {
             listConfig.Items.Clear();
+            listConfig.Items.Add(CreateSystemEntry());
             if (loadedConfig != null)
             {
                 foreach (LaunchInfoData item in loadedConfig.Items)
                 {
-                    listConfig.Items.Add(item);
+                    listConfig.Items.Add(CreateServiceEntry(item));
                 }
             }
 
@@ -338,11 +416,23 @@ namespace tbm_launcher
         private LauncherAppConfig BuildConfiguration()
         {
             var config = new LauncherAppConfig();
-            config.Title = textBox1.Text;
 
             foreach (object item in listConfig.Items)
             {
-                config.Items.Add(((LaunchInfoData)item).Clone());
+                ConfigEditorEntry entry = item as ConfigEditorEntry;
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                if (entry.Kind == ConfigEditorEntryKind.System)
+                {
+                    config.Title = entry.SystemConfig == null ? string.Empty : entry.SystemConfig.Title;
+                }
+                else if (entry.ServiceConfig != null)
+                {
+                    config.Items.Add(entry.ServiceConfig.Clone());
+                }
             }
 
             LauncherConfigFile.ValidateForSave(config);
@@ -353,8 +443,12 @@ namespace tbm_launcher
         {
             foreach (object item in listConfig.Items)
             {
-                LaunchInfoData info = item as LaunchInfoData;
-                if (info != null && !string.IsNullOrWhiteSpace(info.SectionName))
+                ConfigEditorEntry entry = item as ConfigEditorEntry;
+                LaunchInfoData info = entry == null ? null : entry.ServiceConfig;
+                if (entry != null
+                    && entry.Kind == ConfigEditorEntryKind.Service
+                    && info != null
+                    && !string.IsNullOrWhiteSpace(info.SectionName))
                 {
                     yield return info.SectionName;
                 }
@@ -395,6 +489,7 @@ namespace tbm_launcher
             try
             {
                 loadedConfig = LauncherConfigFile.LoadRaw(ProgramGlobalConfig.ConfigFilePath);
+                systemConfig.Title = loadedConfig.Title;
             }
             catch (LauncherConfigException ex)
             {
@@ -403,12 +498,42 @@ namespace tbm_launcher
                     : "加载原始配置失败: " + ex.Message;
                 MessageBox.Show(errorText);
                 loadedConfig = new LauncherAppConfig();
+                systemConfig.Title = loadedConfig.Title;
             }
             catch (Exception ex)
             {
                 MessageBox.Show("加载原始配置失败: " + ex.Message);
                 loadedConfig = new LauncherAppConfig();
+                systemConfig.Title = loadedConfig.Title;
             }
+        }
+
+        private ConfigEditorEntry GetSelectedEditorEntry()
+        {
+            return listConfig.SelectedItem as ConfigEditorEntry;
+        }
+
+        private ConfigEditorEntry CreateSystemEntry()
+        {
+            return new ConfigEditorEntry
+            {
+                Kind = ConfigEditorEntryKind.System,
+                SystemConfig = systemConfig
+            };
+        }
+
+        private ConfigEditorEntry CreateServiceEntry(LaunchInfoData item)
+        {
+            return new ConfigEditorEntry
+            {
+                Kind = ConfigEditorEntryKind.Service,
+                ServiceConfig = item
+            };
+        }
+
+        private void UpdateWindowTitle()
+        {
+            Text = "Configure " + (systemConfig.Title ?? string.Empty);
         }
     }
 }

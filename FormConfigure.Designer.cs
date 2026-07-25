@@ -30,7 +30,6 @@ namespace tbm_launcher
         private void InitializeComponent()
         {
             this.label1 = new System.Windows.Forms.Label();
-            this.listConfig = new tbm_launcher.CusomizedListBox();
             this.btn_launch = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
@@ -42,35 +41,24 @@ namespace tbm_launcher
             this.btn_moveup = new System.Windows.Forms.Button();
             this.btn_movedown = new System.Windows.Forms.Button();
             this.move_copy = new System.Windows.Forms.Button();
+            this.listConfig = new tbm_launcher.CusomizedListBox();
             this.SuspendLayout();
             // 
             // label1
             // 
             this.label1.AutoSize = true;
             this.label1.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.label1.Location = new System.Drawing.Point(17, 40);
+            this.label1.Location = new System.Drawing.Point(17, 7);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(86, 31);
             this.label1.TabIndex = 0;
             this.label1.Text = "配置项";
             // 
-            // listConfig
-            // 
-            this.listConfig.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawVariable;
-            this.listConfig.FormattingEnabled = true;
-            this.listConfig.HoverIndex = -1;
-            this.listConfig.ItemHeight = 24;
-            this.listConfig.Location = new System.Drawing.Point(16, 59);
-            this.listConfig.Name = "listConfig";
-            this.listConfig.Size = new System.Drawing.Size(196, 364);
-            this.listConfig.TabIndex = 1;
-            this.listConfig.SelectedIndexChanged += new System.EventHandler(this.listConfig_SelectedIndexChanged);
-            // 
             // btn_launch
             // 
             this.btn_launch.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.btn_launch.Location = new System.Drawing.Point(703, 438);
+            this.btn_launch.Location = new System.Drawing.Point(703, 405);
             this.btn_launch.Name = "btn_launch";
             this.btn_launch.Size = new System.Drawing.Size(103, 28);
             this.btn_launch.TabIndex = 2;
@@ -81,7 +69,7 @@ namespace tbm_launcher
             // button1
             // 
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.button1.Location = new System.Drawing.Point(594, 438);
+            this.button1.Location = new System.Drawing.Point(594, 405);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(103, 28);
             this.button1.TabIndex = 3;
@@ -91,26 +79,28 @@ namespace tbm_launcher
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(68, 10);
+            this.textBox1.Location = new System.Drawing.Point(389, 399);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(738, 39);
+            this.textBox1.Size = new System.Drawing.Size(199, 39);
             this.textBox1.TabIndex = 8;
+            this.textBox1.Visible = false;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
             this.label3.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.label3.Location = new System.Drawing.Point(17, 13);
+            this.label3.Location = new System.Drawing.Point(320, 404);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(62, 31);
             this.label3.TabIndex = 9;
             this.label3.Text = "标题";
+            this.label3.Visible = false;
             // 
             // button4
             // 
             this.button4.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.button4.Location = new System.Drawing.Point(219, 445);
+            this.button4.Location = new System.Drawing.Point(219, 412);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(94, 19);
             this.button4.TabIndex = 10;
@@ -121,7 +111,7 @@ namespace tbm_launcher
             // 
             // panel_config
             // 
-            this.panel_config.Location = new System.Drawing.Point(218, 49);
+            this.panel_config.Location = new System.Drawing.Point(218, 16);
             this.panel_config.Name = "panel_config";
             this.panel_config.Size = new System.Drawing.Size(594, 381);
             this.panel_config.TabIndex = 11;
@@ -135,7 +125,7 @@ namespace tbm_launcher
             this.button3.FlatAppearance.BorderSize = 0;
             this.button3.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Silver;
             this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button3.Location = new System.Drawing.Point(46, 426);
+            this.button3.Location = new System.Drawing.Point(46, 393);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(22, 22);
             this.button3.TabIndex = 5;
@@ -149,7 +139,7 @@ namespace tbm_launcher
             this.button2.FlatAppearance.BorderSize = 0;
             this.button2.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Silver;
             this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button2.Location = new System.Drawing.Point(18, 426);
+            this.button2.Location = new System.Drawing.Point(18, 393);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(22, 22);
             this.button2.TabIndex = 4;
@@ -163,7 +153,7 @@ namespace tbm_launcher
             this.btn_moveup.FlatAppearance.BorderSize = 0;
             this.btn_moveup.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Silver;
             this.btn_moveup.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_moveup.Location = new System.Drawing.Point(74, 426);
+            this.btn_moveup.Location = new System.Drawing.Point(74, 393);
             this.btn_moveup.Name = "btn_moveup";
             this.btn_moveup.Size = new System.Drawing.Size(22, 22);
             this.btn_moveup.TabIndex = 12;
@@ -177,7 +167,7 @@ namespace tbm_launcher
             this.btn_movedown.FlatAppearance.BorderSize = 0;
             this.btn_movedown.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Silver;
             this.btn_movedown.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_movedown.Location = new System.Drawing.Point(102, 426);
+            this.btn_movedown.Location = new System.Drawing.Point(102, 393);
             this.btn_movedown.Name = "btn_movedown";
             this.btn_movedown.Size = new System.Drawing.Size(22, 22);
             this.btn_movedown.TabIndex = 13;
@@ -191,12 +181,25 @@ namespace tbm_launcher
             this.move_copy.FlatAppearance.BorderSize = 0;
             this.move_copy.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Silver;
             this.move_copy.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.move_copy.Location = new System.Drawing.Point(130, 426);
+            this.move_copy.Location = new System.Drawing.Point(130, 393);
             this.move_copy.Name = "move_copy";
             this.move_copy.Size = new System.Drawing.Size(22, 22);
             this.move_copy.TabIndex = 14;
             this.move_copy.UseVisualStyleBackColor = true;
             this.move_copy.Click += new System.EventHandler(this.move_copy_Click);
+            // 
+            // listConfig
+            // 
+            this.listConfig.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawVariable;
+            this.listConfig.EnableInlineStringEditing = false;
+            this.listConfig.FormattingEnabled = true;
+            this.listConfig.HoverIndex = -1;
+            this.listConfig.ItemHeight = 24;
+            this.listConfig.Location = new System.Drawing.Point(16, 26);
+            this.listConfig.Name = "listConfig";
+            this.listConfig.Size = new System.Drawing.Size(196, 364);
+            this.listConfig.TabIndex = 1;
+            this.listConfig.SelectedIndexChanged += new System.EventHandler(this.listConfig_SelectedIndexChanged);
             // 
             // FormConfigure
             // 
@@ -204,7 +207,8 @@ namespace tbm_launcher
             this.AutoScaleDimensions = new System.Drawing.SizeF(14F, 31F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(824, 476);
+            this.ClientSize = new System.Drawing.Size(824, 442);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.move_copy);
             this.Controls.Add(this.btn_movedown);
             this.Controls.Add(this.btn_moveup);
@@ -212,13 +216,12 @@ namespace tbm_launcher
             this.Controls.Add(this.panel_config);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.btn_launch);
             this.Controls.Add(this.listConfig);
             this.Controls.Add(this.label1);
-            this.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.Font = new System.Drawing.Font("Microsoft YaHei", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
