@@ -37,6 +37,10 @@ namespace tbm_launcher
         public bool depend_resolvable;
         public string SectionName = string.Empty;
         public string Name = string.Empty;
+        public bool DisplayBold = false;
+        public string RawDisplayBoldValue;
+        public bool Disabled = false;
+        public string RawDisabledValue;
         public string Command = string.Empty;
         public string StopCommand = string.Empty;
         public string PortClickCommand = string.Empty;
@@ -74,6 +78,16 @@ namespace tbm_launcher
                     break;
                 case "name":
                     Name = value ?? string.Empty;
+                    break;
+                case "display_bold":
+                    RawDisplayBoldValue = value;
+                    DisplayBold = string.Equals(value, "1", StringComparison.Ordinal)
+                        || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+                    break;
+                case "disabled":
+                    RawDisabledValue = value;
+                    Disabled = string.Equals(value, "1", StringComparison.Ordinal)
+                        || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
                     break;
                 case "command":
                     Command = value ?? string.Empty;
@@ -153,6 +167,16 @@ namespace tbm_launcher
                 case "name":
                     Name = value ?? string.Empty;
                     break;
+                case "display_bold":
+                    RawDisplayBoldValue = value;
+                    DisplayBold = string.Equals(value, "1", StringComparison.Ordinal)
+                        || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+                    break;
+                case "disabled":
+                    RawDisabledValue = value;
+                    Disabled = string.Equals(value, "1", StringComparison.Ordinal)
+                        || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+                    break;
                 case "command":
                     Command = value ?? string.Empty;
                     break;
@@ -205,6 +229,10 @@ namespace tbm_launcher
                     return SectionName;
                 case "name":
                     return Name;
+                case "display_bold":
+                    return RawDisplayBoldValue ?? (DisplayBold ? "1" : "0");
+                case "disabled":
+                    return RawDisabledValue ?? (Disabled ? "1" : "0");
                 case "command":
                     return Command;
                 case "stop_command":
@@ -376,6 +404,8 @@ namespace tbm_launcher
         public string StopCommand { get { return Data.StopCommand; } }
         public string PortClickCommand { get { return Data.PortClickCommand; } }
         public int PortNumber { get { return Data.PortNumber; } }
+        public bool DisplayBold { get { return Data.DisplayBold; } }
+        public bool Disabled { get { return Data.Disabled; } }
         public string RequirementCommand { get { return Data.RequirementCommand; } }
         public string StatusCheckMethod { get { return Data.StatusCheckMethod; } }
         public bool RunBackground { get { return Data.RunBackground; } }
@@ -386,7 +416,7 @@ namespace tbm_launcher
         {
             get
             {
-                return HasLaunchCommand && StatusCheckMethod != StatusCheckMethodEnum.NO_CHECK;
+                return !Disabled && HasLaunchCommand && StatusCheckMethod != StatusCheckMethodEnum.NO_CHECK;
             }
         }
 
@@ -454,7 +484,9 @@ namespace tbm_launcher
             {
                 Ctrl_Name.Location = new Point(DpiHelper.ScaleValue(DesignNameLeft, effectiveDpi), textTop);
                 Ctrl_Name.Size = new Size(nameWidth, labelHeight);
-                Ctrl_Name.Font = Ctrl_ParentControl.Font;
+                Ctrl_Name.Font = DisplayBold
+                    ? new Font(Ctrl_ParentControl.Font, Ctrl_ParentControl.Font.Style | FontStyle.Bold)
+                    : Ctrl_ParentControl.Font;
                 Ctrl_Name.Height = Math.Max(Ctrl_Name.Height, rowHeight);
             }
             

@@ -445,6 +445,25 @@ namespace tbm_launcher
                 GetReferenceSectionNameHandler = p => p.SectionName
             });
 
+            settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
+            {
+                ConfigName = "display_bold",
+                FriendlyConfigName = "加粗显示标题",
+                ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_BOOL,
+                GetValueHandler = p => p.GetFieldValueString("display_bold"),
+                SetValueHandler = (p, val) => { p.SetFieldsFromRawString("display_bold", val); },
+                GetReferenceSectionNameHandler = p => p.SectionName
+            });
+
+            settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
+            {
+                ConfigName = "disabled",
+                FriendlyConfigName = "禁用配置项",
+                ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_BOOL,
+                GetValueHandler = p => p.GetFieldValueString("disabled"),
+                SetValueHandler = (p, val) => { p.SetFieldsFromRawString("disabled", val); },
+                GetReferenceSectionNameHandler = p => p.SectionName
+            });
 
             MetaInformation<LaunchInfoData>.ValueFillHandler = LaunchInfoData.GetFieldValueString;
         }

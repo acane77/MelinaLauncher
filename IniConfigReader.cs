@@ -169,6 +169,8 @@ namespace tbm_launcher
                 builder.AppendLine();
                 builder.Append('[').Append(item.SectionName).AppendLine("]");
                 builder.Append("name = ").AppendLine(ToTomlString(item.Name ?? string.Empty));
+                builder.Append("display_bold = ").AppendLine(SerializeBooleanValue(item.GetFieldValueString("display_bold")));
+                builder.Append("disabled = ").AppendLine(SerializeBooleanValue(item.GetFieldValueString("disabled")));
                 builder.Append("command = ").AppendLine(ToTomlString(item.Command ?? string.Empty));
                 builder.Append("stop_command = ").AppendLine(ToTomlString(item.StopCommand ?? string.Empty));
                 builder.Append("port_click_command = ").AppendLine(ToTomlString(item.PortClickCommand ?? string.Empty));

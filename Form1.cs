@@ -108,10 +108,18 @@ namespace tbm_launcher
                 EnsureConfigFileExists();
                 LauncherAppConfig config = LauncherConfigFile.Load(ProgramGlobalConfig.ConfigFilePath);
 
+                int visibleIndex = 0;
                 for (int index = 0; index < config.Items.Count; index++)
                 {
-                    ServiceItemControlGroup group = new ServiceItemControlGroup(config.Items[index], index, panel1);
+                    LaunchInfoData item = config.Items[index];
+                    if (item == null || item.Disabled)
+                    {
+                        continue;
+                    }
+
+                    ServiceItemControlGroup group = new ServiceItemControlGroup(item, visibleIndex, panel1);
                     LI.Add(group);
+                    visibleIndex++;
                 }
 
                 string title = string.IsNullOrWhiteSpace(config.Title)
