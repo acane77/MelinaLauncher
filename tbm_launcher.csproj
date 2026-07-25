@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="CusomizedListBox.cs" />
     <Compile Include="DeepCopy.cs" />
+    <Compile Include="DpiScaling.cs" />
     <Compile Include="FormConfigure.cs">
       <SubType>Form</SubType>
     </Compile>

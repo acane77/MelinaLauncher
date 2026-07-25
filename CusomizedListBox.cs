@@ -280,13 +280,20 @@ namespace tbm_launcher
                     }
 
                     Color borderColor = Color.FromArgb(255, 0, 120, 212);
+                    Color borderColorUnfocused = Color.FromArgb(255, 148, 148, 148);
                     float borderWidth = 1; // 设置边框宽度
 
                     if (Focused || mouseItem == Items[i])
                     {
                         using (Pen pen = new Pen(borderColor, borderWidth))
                         {
-                            // 绘制边界
+                            g.DrawRectangle(pen, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 2);
+                        }
+                    }
+                    else if (!Focused)
+                    {
+                        using (Pen pen = new Pen(borderColorUnfocused, borderWidth))
+                        {
                             g.DrawRectangle(pen, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 2);
                         }
                     }
@@ -304,7 +311,8 @@ namespace tbm_launcher
                 }
 
                 int textLeft = bounds.Left + DpiHelper.ScaleValue(3, ResolveCurrentDpi());
-                int textTop = bounds.Top + DpiHelper.ScaleValue(6 * ResolveCurrentDpi() / DpiHelper.DefaultDpi, ResolveCurrentDpi());
+                int textTop = bounds.Top + DpiHelper.ScaleValue(11, ResolveCurrentDpi());
+                //string tmpDebugText = "(" + textLeft.ToString() + ", " + textTop.ToString() + ") " + Items[i].ToString();
                 TextRenderer.DrawText(
                     g,
                     Items[i].ToString(),
@@ -411,8 +419,9 @@ namespace tbm_launcher
             {
                 return;
             }
+            float dpiScale = (float)ResolveCurrentDpi() / DpiHelper.DefaultDpi;
             int borderInset = DpiHelper.ScaleValue(5, ResolveCurrentDpi());
-            int borderInsetTop = DpiHelper.ScaleValue(4, ResolveCurrentDpi());
+            int borderInsetTop = DpiHelper.ScaleValue((int)Math.Round(1.5 * dpiScale), ResolveCurrentDpi());
             int minimumEditorSize = DpiHelper.ScaleValue(27, ResolveCurrentDpi());
             inlineEditor.Bounds = new Rectangle(
                 bounds.Left + borderInset,

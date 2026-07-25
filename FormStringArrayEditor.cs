@@ -125,7 +125,7 @@ namespace tbm_launcher
             BackColor = Color.White;
             CancelButton = buttonCancel;
             ClientSize = new Size(584, 354);
-            Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(134)));
+            Font = new Font("Microsoft Yahei", 9F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(134)));
             Controls.Add(buttonCancel);
             Controls.Add(buttonOk);
             Controls.Add(buttonMoveDown);
