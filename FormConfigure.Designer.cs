@@ -228,6 +228,7 @@ namespace tbm_launcher
             this.MinimizeBox = false;
             this.Name = "FormConfigure";
             this.ShowIcon = false;
+            this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Melina Launcher - Configure";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormConfigure_FormClosed);

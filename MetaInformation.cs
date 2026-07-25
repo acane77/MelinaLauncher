@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -60,6 +61,56 @@ namespace tbm_launcher
         public int ConfigType;
         public List<ListItem> ListItems;
 
+        private static bool TryParseNumericValue(string rawValue, bool allowDecimal, out decimal parsedValue)
+        {
+            parsedValue = 0m;
+            string normalized = (rawValue ?? string.Empty).Trim();
+            if (normalized.Length == 0)
+            {
+                return false;
+            }
+
+            if (!decimal.TryParse(normalized, NumberStyles.Number, CultureInfo.InvariantCulture, out parsedValue))
+            {
+                return false;
+            }
+
+            if (!allowDecimal && decimal.Truncate(parsedValue) != parsedValue)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static int ResolveDecimalPlaces(string rawValue)
+        {
+            string normalized = (rawValue ?? string.Empty).Trim();
+            int pointIndex = normalized.IndexOf('.');
+            if (pointIndex < 0 || pointIndex >= normalized.Length - 1)
+            {
+                return 2;
+            }
+
+            return Math.Max(1, Math.Min(6, normalized.Length - pointIndex - 1));
+        }
+
+        private static decimal ResolveDecimalIncrement(int decimalPlaces)
+        {
+            if (decimalPlaces <= 0)
+            {
+                return 1m;
+            }
+
+            decimal increment = 1m;
+            for (int index = 0; index < decimalPlaces; index++)
+            {
+                increment /= 10m;
+            }
+
+            return increment;
+        }
+
         private void TryCopyReferenceToClipboard(ValueType info)
         {
             string sectionName = GetReferenceSectionNameHandler == null
@@ -114,8 +165,6 @@ namespace tbm_launcher
             Control additionalButton = null;
             if (settingItem.ConfigType == CONFIG_TYPE_STRING
                 || settingItem.ConfigType == CONFIG_TYPE_FILE
-                || settingItem.ConfigType == CONFIG_TYPE_INT
-                || settingItem.ConfigType == CONFIG_TYPE_DECIMAL
                 || settingItem.ConfigType == CONFIG_TYPE_DIRECTORY)
             {
                 if (settingItem.ListItems != null)
@@ -154,6 +203,41 @@ namespace tbm_launcher
                     settingItem.SetValueHandler(info, (s_ as Control).Text);
                 };
                 valueControl.Text = value;
+            }
+            else if (settingItem.ConfigType == CONFIG_TYPE_INT
+                || settingItem.ConfigType == CONFIG_TYPE_DECIMAL)
+            {
+                bool allowDecimal = settingItem.ConfigType == CONFIG_TYPE_DECIMAL;
+                NumericUpDown numericControl = new NumericUpDown();
+                bool isUpdatingNumericValue = true;
+                numericControl.Minimum = decimal.MinValue;
+                numericControl.Maximum = decimal.MaxValue;
+                numericControl.DecimalPlaces = allowDecimal ? ResolveDecimalPlaces(value) : 0;
+                numericControl.Increment = ResolveDecimalIncrement(numericControl.DecimalPlaces);
+                numericControl.ThousandsSeparator = false;
+                numericControl.TextAlign = HorizontalAlignment.Left;
+
+                decimal parsedValue;
+                numericControl.Value = TryParseNumericValue(value, allowDecimal, out parsedValue)
+                    ? parsedValue
+                    : 0m;
+
+                isUpdatingNumericValue = false;
+                numericControl.ValueChanged += (object sender_, EventArgs e_) =>
+                {
+                    if (isUpdatingNumericValue)
+                    {
+                        return;
+                    }
+
+                    NumericUpDown control = sender_ as NumericUpDown;
+                    string rawNumericValue = allowDecimal
+                        ? control.Value.ToString(CultureInfo.InvariantCulture)
+                        : decimal.Truncate(control.Value).ToString(CultureInfo.InvariantCulture);
+                    settingItem.SetValueHandler(info, rawNumericValue);
+                };
+
+                valueControl = numericControl;
             }
             else if (settingItem.ConfigType == CONFIG_TYPE_LIST)
             {

@@ -80,12 +80,20 @@ namespace tbm_launcher
 
         private void button2_Click(object sender, EventArgs e)
         {
-            var form = new FormConfigure();
-            form.IniConfigureList = LI;
-            form.SystemTitle = Text;
-            Hide();
-            form.ShowDialog();
-            Show();
+            timerRefresh.Enabled = false;
+            try
+            {
+                using (var form = new FormConfigure())
+                {
+                    form.IniConfigureList = LI;
+                    form.SystemTitle = Text;
+                    form.ShowDialog(this);
+                }
+            }
+            finally
+            {
+                LoadConfiguration();
+            }
         }
 
         private void LoadConfiguration()

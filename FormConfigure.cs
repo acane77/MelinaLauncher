@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -90,8 +89,6 @@ namespace tbm_launcher
 
         private void FormConfigure_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Process.Start(Application.ExecutablePath);
-            Application.Exit();
         }
 
         private void listConfig_SelectedIndexChanged(object sender, EventArgs e)
