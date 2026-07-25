@@ -26,12 +26,26 @@ namespace tbm_launcher
         private sealed class SystemConfigData
         {
             public string Title = string.Empty;
+            public bool HideOneKey = false;
+            public string RawHideOneKeyValue;
+            public int CheckIntervalSeconds = 10;
+            public string RawCheckIntervalValue;
 
             public string GetFieldValueString(string configName)
             {
                 if (string.Equals(configName, "title", StringComparison.OrdinalIgnoreCase))
                 {
                     return Title;
+                }
+
+                if (string.Equals(configName, "hide_one_key", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RawHideOneKeyValue ?? (HideOneKey ? "1" : "0");
+                }
+
+                if (string.Equals(configName, "chk_interval", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RawCheckIntervalValue ?? CheckIntervalSeconds.ToString();
                 }
 
                 return string.Empty;
@@ -254,6 +268,42 @@ namespace tbm_launcher
                 },
                 GetReferenceSectionNameHandler = p => ProgramGlobalConfig.SystemSectionName
             });
+            systemSettingConfigs.Add(new MetaInformation<SystemConfigData>
+            {
+                ConfigName = "chk_interval",
+                FriendlyConfigName = "刷新间隔（秒）",
+                ConfigType = MetaInformation<SystemConfigData>.CONFIG_TYPE_INT,
+                GetValueHandler = p => p.CheckIntervalSeconds.ToString(),
+                SetValueHandler = (p, val) =>
+                {
+                    p.RawCheckIntervalValue = val;
+                    int parsedSeconds;
+                    if (Int32.TryParse(val, out parsedSeconds) && parsedSeconds > 0)
+                    {
+                        p.CheckIntervalSeconds = parsedSeconds;
+                    }
+                    else
+                    {
+                        p.CheckIntervalSeconds = 10;
+                    }
+                },
+                GetReferenceSectionNameHandler = p => ProgramGlobalConfig.SystemSectionName
+            });
+            systemSettingConfigs.Add(new MetaInformation<SystemConfigData>
+            {
+                ConfigName = "hide_one_key",
+                FriendlyConfigName = "隐藏一键启动和一键停止",
+                ConfigType = MetaInformation<SystemConfigData>.CONFIG_TYPE_BOOL,
+                GetValueHandler = p => p.HideOneKey ? "1" : "0",
+                SetValueHandler = (p, val) =>
+                {
+                    p.RawHideOneKeyValue = val;
+                    p.HideOneKey = string.Equals(val, "1", StringComparison.Ordinal)
+                        || string.Equals(val, "true", StringComparison.OrdinalIgnoreCase);
+                },
+                GetReferenceSectionNameHandler = p => ProgramGlobalConfig.SystemSectionName
+            });
+            
             MetaInformation<SystemConfigData>.ValueFillHandler = (configName, info) => info.GetFieldValueString(configName);
 
             settingItemConfigs.Clear();
@@ -428,6 +478,10 @@ namespace tbm_launcher
                 if (entry.Kind == ConfigEditorEntryKind.System)
                 {
                     config.Title = entry.SystemConfig == null ? string.Empty : entry.SystemConfig.Title;
+                    config.HideOneKey = entry.SystemConfig != null && entry.SystemConfig.HideOneKey;
+                    config.RawHideOneKeyValue = entry.SystemConfig == null ? null : entry.SystemConfig.RawHideOneKeyValue;
+                    config.CheckIntervalSeconds = entry.SystemConfig == null ? 10 : entry.SystemConfig.CheckIntervalSeconds;
+                    config.RawCheckIntervalValue = entry.SystemConfig == null ? null : entry.SystemConfig.RawCheckIntervalValue;
                 }
                 else if (entry.ServiceConfig != null)
                 {
@@ -490,6 +544,10 @@ namespace tbm_launcher
             {
                 loadedConfig = LauncherConfigFile.LoadRaw(ProgramGlobalConfig.ConfigFilePath);
                 systemConfig.Title = loadedConfig.Title;
+                systemConfig.HideOneKey = loadedConfig.HideOneKey;
+                systemConfig.RawHideOneKeyValue = loadedConfig.RawHideOneKeyValue;
+                systemConfig.CheckIntervalSeconds = loadedConfig.CheckIntervalSeconds;
+                systemConfig.RawCheckIntervalValue = loadedConfig.RawCheckIntervalValue;
             }
             catch (LauncherConfigException ex)
             {
@@ -499,12 +557,20 @@ namespace tbm_launcher
                 MessageBox.Show(errorText);
                 loadedConfig = new LauncherAppConfig();
                 systemConfig.Title = loadedConfig.Title;
+                systemConfig.HideOneKey = loadedConfig.HideOneKey;
+                systemConfig.RawHideOneKeyValue = loadedConfig.RawHideOneKeyValue;
+                systemConfig.CheckIntervalSeconds = loadedConfig.CheckIntervalSeconds;
+                systemConfig.RawCheckIntervalValue = loadedConfig.RawCheckIntervalValue;
             }
             catch (Exception ex)
             {
                 MessageBox.Show("加载原始配置失败: " + ex.Message);
                 loadedConfig = new LauncherAppConfig();
                 systemConfig.Title = loadedConfig.Title;
+                systemConfig.HideOneKey = loadedConfig.HideOneKey;
+                systemConfig.RawHideOneKeyValue = loadedConfig.RawHideOneKeyValue;
+                systemConfig.CheckIntervalSeconds = loadedConfig.CheckIntervalSeconds;
+                systemConfig.RawCheckIntervalValue = loadedConfig.RawCheckIntervalValue;
             }
         }
 

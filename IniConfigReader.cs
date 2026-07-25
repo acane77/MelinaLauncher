@@ -21,7 +21,101 @@ namespace tbm_launcher
     public class LauncherAppConfig
     {
         public string Title = ProgramGlobalConfig.DefaultApplicationTitle;
+        public bool HideOneKey = false;
+        public string RawHideOneKeyValue;
+        public int CheckIntervalSeconds = 10;
+        public string RawCheckIntervalValue;
         public List<LaunchInfoData> Items = new List<LaunchInfoData>();
+
+        public void SetSystemFieldFromString(string settingName, string value)
+        {
+            switch (settingName)
+            {
+                case "title":
+                    Title = value ?? ProgramGlobalConfig.DefaultApplicationTitle;
+                    break;
+                case "hide_one_key":
+                    RawHideOneKeyValue = value;
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        HideOneKey = false;
+                        break;
+                    }
+
+                    if (string.Equals(value, "1", StringComparison.Ordinal)
+                        || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        HideOneKey = true;
+                        break;
+                    }
+
+                    if (string.Equals(value, "0", StringComparison.Ordinal)
+                        || string.Equals(value, "false", StringComparison.OrdinalIgnoreCase))
+                    {
+                        HideOneKey = false;
+                        break;
+                    }
+
+                    throw new LauncherConfigException("system.hide_one_key 必须是 true/false 或 1/0。");
+                case "chk_interval":
+                    RawCheckIntervalValue = value;
+                    int parsedSeconds;
+                    if (!Int32.TryParse(value, out parsedSeconds))
+                    {
+                        throw new LauncherConfigException("system.chk_interval 必须是整数。");
+                    }
+
+                    if (parsedSeconds <= 0)
+                    {
+                        throw new LauncherConfigException("system.chk_interval 必须大于 0。");
+                    }
+
+                    CheckIntervalSeconds = parsedSeconds;
+                    break;
+            }
+        }
+
+        public void SetSystemFieldFromRawString(string settingName, string value)
+        {
+            switch (settingName)
+            {
+                case "title":
+                    Title = value ?? ProgramGlobalConfig.DefaultApplicationTitle;
+                    break;
+                case "hide_one_key":
+                    RawHideOneKeyValue = value;
+                    HideOneKey = string.Equals(value, "1", StringComparison.Ordinal)
+                        || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+                    break;
+                case "chk_interval":
+                    RawCheckIntervalValue = value;
+                    int parsedSeconds;
+                    if (Int32.TryParse(value, out parsedSeconds) && parsedSeconds > 0)
+                    {
+                        CheckIntervalSeconds = parsedSeconds;
+                    }
+                    else
+                    {
+                        CheckIntervalSeconds = 10;
+                    }
+                    break;
+            }
+        }
+
+        public string GetSystemFieldValueString(string settingName)
+        {
+            switch (settingName)
+            {
+                case "title":
+                    return Title;
+                case "hide_one_key":
+                    return RawHideOneKeyValue ?? (HideOneKey ? "1" : "0");
+                case "chk_interval":
+                    return RawCheckIntervalValue ?? CheckIntervalSeconds.ToString();
+            }
+
+            return string.Empty;
+        }
     }
 
 
@@ -67,6 +161,8 @@ namespace tbm_launcher
             var builder = new StringBuilder();
             builder.AppendLine("[system]");
             builder.Append("title = ").AppendLine(ToTomlString(config.Title ?? string.Empty));
+            builder.Append("hide_one_key = ").AppendLine(SerializeBooleanValue(config.GetSystemFieldValueString("hide_one_key")));
+            builder.Append("chk_interval = ").AppendLine(SerializePositiveIntegerValue(config.GetSystemFieldValueString("chk_interval"), 10));
 
             foreach (LaunchInfoData item in config.Items)
             {
@@ -114,6 +210,8 @@ namespace tbm_launcher
             {
                 throw new LauncherConfigException("配置对象为空。");
             }
+
+            ValidateSystemSettingsForSave(config);
 
             var usedSections = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (LaunchInfoData item in config.Items)
@@ -286,9 +384,13 @@ namespace tbm_launcher
                 if (string.Equals(currentSection, ProgramGlobalConfig.SystemSectionName, StringComparison.OrdinalIgnoreCase))
                 {
                     string value = ParseScalarValue(rawValue, lineNumber);
-                    if (loweredKey == "title")
+                    if (preserveRawValues)
                     {
-                        config.Title = value;
+                        config.SetSystemFieldFromRawString(loweredKey, value);
+                    }
+                    else
+                    {
+                        config.SetSystemFieldFromString(loweredKey, value);
                     }
                     continue;
                 }
@@ -806,6 +908,11 @@ namespace tbm_launcher
         private static string SerializeRunBackgroundValue(LaunchInfoData item)
         {
             string value = item.GetFieldValueString("run_background") ?? string.Empty;
+            return SerializeBooleanValue(value);
+        }
+
+        private static string SerializeBooleanValue(string value)
+        {
             if (string.Equals(value, "1", StringComparison.Ordinal) || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase))
             {
                 return "true";
@@ -818,6 +925,40 @@ namespace tbm_launcher
 
             return ToTomlString(value);
         }
+
+        private static string SerializePositiveIntegerValue(string value, int fallback)
+        {
+            int parsedValue;
+            if (Int32.TryParse(value, out parsedValue) && parsedValue > 0)
+            {
+                return parsedValue.ToString();
+            }
+
+            return fallback.ToString();
+        }
+
+        private static void ValidateSystemSettingsForSave(LauncherAppConfig config)
+        {
+            string hideOneKeyValue = config.GetSystemFieldValueString("hide_one_key") ?? string.Empty;
+            if (!IsSupportedBooleanText(hideOneKeyValue))
+            {
+                throw new LauncherConfigException("system.hide_one_key 必须是 true/false 或 1/0。");
+            }
+
+            string intervalValue = config.GetSystemFieldValueString("chk_interval") ?? string.Empty;
+            int parsedSeconds;
+            if (!Int32.TryParse(intervalValue, out parsedSeconds) || parsedSeconds <= 0)
+            {
+                throw new LauncherConfigException("system.chk_interval 必须是大于 0 的整数。");
+            }
+        }
+
+        private static bool IsSupportedBooleanText(string value)
+        {
+            return string.Equals(value, "1", StringComparison.Ordinal)
+                || string.Equals(value, "0", StringComparison.Ordinal)
+                || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "false", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }
-

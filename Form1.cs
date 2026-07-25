@@ -109,6 +109,9 @@ namespace tbm_launcher
                     ? ProgramGlobalConfig.DefaultApplicationTitle
                     : config.Title;
                 label1.Text = Text = title;
+                btn_launch.Visible = !config.HideOneKey;
+                btn_stop.Visible = !config.HideOneKey;
+                timerRefresh.Interval = Math.Max(1, config.CheckIntervalSeconds) * 1000;
                 timerRefresh.Enabled = true;
             }
             catch (LauncherConfigException ex)
@@ -118,11 +121,17 @@ namespace tbm_launcher
                     : "加载配置文件失败: " + ex.Message;
                 MessageBox.Show(errorText);
                 label1.Text = Text = ProgramGlobalConfig.DefaultApplicationTitle;
+                btn_launch.Visible = true;
+                btn_stop.Visible = true;
+                timerRefresh.Interval = 10000;
             }
             catch (Exception ex)
             {
                 MessageBox.Show("加载配置文件失败:" + ex.Message);
                 label1.Text = Text = ProgramGlobalConfig.DefaultApplicationTitle;
+                btn_launch.Visible = true;
+                btn_stop.Visible = true;
+                timerRefresh.Interval = 10000;
             }
         }
 
