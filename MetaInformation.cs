@@ -170,22 +170,17 @@ namespace tbm_launcher
             Control additionalButton = null;
             if (settingItem.ConfigType == CONFIG_TYPE_STRING
                 || settingItem.ConfigType == CONFIG_TYPE_FILE
+                || settingItem.ConfigType == CONFIG_TYPE_INT
+                || settingItem.ConfigType == CONFIG_TYPE_DECIMAL
                 || settingItem.ConfigType == CONFIG_TYPE_DIRECTORY)
             {
                 if (settingItem.ListItems != null)
                 {
                     ComboBox comboBox = new ComboBox();
                     baseValueHeightOffset = -DpiHelper.ScaleValue(1, currentDpi);
-                    int selectedIndex = -1;
-                    int currentIndex = 0;
                     foreach (ListItem item in settingItem.ListItems)
                     {
                         comboBox.Items.Add(item.Name ?? item.Value);
-                        if (string.Equals(item.Value, value, StringComparison.Ordinal))
-                        {
-                            selectedIndex = currentIndex;
-                        }
-                        currentIndex++;
                     }
                     valueControl = comboBox;
                     comboBox.SelectedIndexChanged += (object s, EventArgs ev) => {
@@ -193,36 +188,19 @@ namespace tbm_launcher
                         int selected_index = cb.SelectedIndex;
                         if (selected_index < 0)
                             return;
-                        settingItem.SetValueHandler(info, settingItem.ListItems[selected_index].Value);
+                        string text = settingItem.ListItems[selected_index].Value;
+                        cb.BeginInvoke(new Action(() => cb.Text = text));
                     };
-                    comboBox.TextChanged += (object s, EventArgs ev) =>
-                    {
-                        ComboBox cb = s as ComboBox;
-                        if (cb.DropDownStyle == ComboBoxStyle.DropDown && cb.SelectedIndex < 0)
-                        {
-                            settingItem.SetValueHandler(info, cb.Text);
-                        }
-                    };
-                    if (selectedIndex >= 0)
-                    {
-                        comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-                        comboBox.SelectedIndex = selectedIndex;
-                    }
-                    else
-                    {
-                        comboBox.DropDownStyle = ComboBoxStyle.DropDown;
-                        comboBox.Text = value;
-                    }
                 }
                 else
                 {
                     TextBox valueCtrl = new TextBox();
                     valueControl = valueCtrl;
-                    valueControl.TextChanged += (object s_, EventArgs e_) => {
-                        settingItem.SetValueHandler(info, (s_ as Control).Text);
-                    };
-                    valueControl.Text = value;
                 }
+                valueControl.TextChanged += (object s_, EventArgs e_) => {
+                    settingItem.SetValueHandler(info, (s_ as Control).Text);
+                };
+                valueControl.Text = value;
             }
             else if (settingItem.ConfigType == CONFIG_TYPE_INT
                 || settingItem.ConfigType == CONFIG_TYPE_DECIMAL)
