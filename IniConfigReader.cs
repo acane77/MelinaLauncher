@@ -171,6 +171,7 @@ namespace tbm_launcher
                 builder.Append("name = ").AppendLine(ToTomlString(item.Name ?? string.Empty));
                 builder.Append("command = ").AppendLine(ToTomlString(item.Command ?? string.Empty));
                 builder.Append("stop_command = ").AppendLine(ToTomlString(item.StopCommand ?? string.Empty));
+                builder.Append("port_click_command = ").AppendLine(ToTomlString(item.PortClickCommand ?? string.Empty));
                 builder.Append("port = ").AppendLine(SerializePortValue(item));
                 builder.Append("requirement_command = ").AppendLine(ToTomlString(item.RequirementCommand ?? string.Empty));
                 if (item.Environs != null && item.Environs.Count > 0)

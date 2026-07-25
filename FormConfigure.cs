@@ -435,6 +435,17 @@ namespace tbm_launcher
                 GetReferenceSectionNameHandler = p => p.SectionName
             });
 
+            settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
+            {
+                ConfigName = "port_click_command",
+                FriendlyConfigName = "端口点击命令",
+                ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING,
+                GetValueHandler = p => p.PortClickCommand,
+                SetValueHandler = (p, val) => { p.PortClickCommand = val; },
+                GetReferenceSectionNameHandler = p => p.SectionName
+            });
+
+
             MetaInformation<LaunchInfoData>.ValueFillHandler = LaunchInfoData.GetFieldValueString;
         }
 

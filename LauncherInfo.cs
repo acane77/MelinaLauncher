@@ -39,6 +39,7 @@ namespace tbm_launcher
         public string Name = string.Empty;
         public string Command = string.Empty;
         public string StopCommand = string.Empty;
+        public string PortClickCommand = string.Empty;
         public int PortNumber = 0;
         public string RawPortValue;
         public List<string> Environs = new List<string>();
@@ -79,6 +80,9 @@ namespace tbm_launcher
                     break;
                 case "stop_command":
                     StopCommand = value ?? string.Empty;
+                    break;
+                case "port_click_command":
+                    PortClickCommand = value ?? string.Empty;
                     break;
                 case "port":
                     try
@@ -155,6 +159,9 @@ namespace tbm_launcher
                 case "stop_command":
                     StopCommand = value ?? string.Empty;
                     break;
+                case "port_click_command":
+                    PortClickCommand = value ?? string.Empty;
+                    break;
                 case "port":
                     RawPortValue = value;
                     int parsedPort;
@@ -202,6 +209,8 @@ namespace tbm_launcher
                     return Command;
                 case "stop_command":
                     return StopCommand;
+                case "port_click_command":
+                    return PortClickCommand;
                 case "port":
                     return RawPortValue ?? PortNumber.ToString();
                 case "requirement_command":
@@ -309,7 +318,7 @@ namespace tbm_launcher
             {
                 if (Status == RunningStatus.RUNNING)
                 {
-                    Process.Start("http://127.0.0.1:" + Port + "/");
+                    ExecutePortClickAction();
                 }
             };
             Ctrl_Port.MouseEnter += (object s, EventArgs e) =>
@@ -365,6 +374,7 @@ namespace tbm_launcher
 
         public string Command { get { return Data.Command; } }
         public string StopCommand { get { return Data.StopCommand; } }
+        public string PortClickCommand { get { return Data.PortClickCommand; } }
         public int PortNumber { get { return Data.PortNumber; } }
         public string RequirementCommand { get { return Data.RequirementCommand; } }
         public string StatusCheckMethod { get { return Data.StatusCheckMethod; } }
@@ -794,6 +804,80 @@ namespace tbm_launcher
             catch
             {
                 return -1;
+            }
+        }
+
+        private void ExecutePortClickAction()
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(PortClickCommand))
+                {
+                    StartDetachedCommand(PortClickCommand);
+                    return;
+                }
+
+                Process.Start("http://localhost:" + Port + "/");
+            }
+            catch (Exception ex)
+            {
+                if (Ctrl_ParentControl != null)
+                {
+                    InvokeIfRequired(() =>
+                    {
+                        MessageBox.Show(
+                            Ctrl_ParentControl.Parent,
+                            "执行端口点击操作时发生了错误。\r\n\r\n" + ex.Message,
+                            "Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    });
+                }
+            }
+        }
+
+        private void StartDetachedCommand(string command)
+        {
+            using (Process process = new Process())
+            {
+                if (!string.IsNullOrWhiteSpace(WorkingDirectory))
+                {
+                    process.StartInfo.WorkingDirectory = WorkingDirectory;
+                }
+
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.Arguments = "/c \"" + (command ?? string.Empty) + "\"";
+                process.StartInfo.CreateNoWindow = true;
+
+                if (Data.Environs.Count > 0)
+                {
+                    // Keep click-command execution aligned with launch-command env injection.
+                    process.StartInfo.UseShellExecute = false;
+                    foreach (string environmentEntry in Data.Environs ?? new List<string>())
+                    {
+                        int separatorIndex = environmentEntry.IndexOf('=');
+                        if (separatorIndex <= 0)
+                        {
+                            continue;
+                        }
+
+                        string name = environmentEntry.Substring(0, separatorIndex).Trim();
+                        string value = environmentEntry.Substring(separatorIndex + 1);
+                        if (name.Length == 0)
+                        {
+                            continue;
+                        }
+
+                        process.StartInfo.EnvironmentVariables[name] = value;
+                    }
+                }
+
+                if (RunBackground)
+                {
+                    process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                }
+
+                process.Start();
             }
         }
 
