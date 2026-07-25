@@ -11,6 +11,7 @@ namespace tbm_launcher
     public partial class FormConfigure : Form
     {
         private readonly List<MetaInformation<LaunchInfoData>> settingItemConfigs = new List<MetaInformation<LaunchInfoData>>();
+        private LauncherAppConfig loadedConfig = new LauncherAppConfig();
         private int LastSelectedConfigItem = -1;
         private const string CRLF = "\r\n";
 
@@ -25,9 +26,10 @@ namespace tbm_launcher
         private void FormConfigure_Load(object sender, EventArgs e)
         {
             InitializeConfigItem();
+            LoadRawConfiguration();
             RenderConfigItemList();
-            textBox1.Text = SystemTitle;
-            Text = "Configure " + SystemTitle;
+            textBox1.Text = loadedConfig.Title;
+            Text = "Configure " + loadedConfig.Title;
         }
 
         private void FormConfigure_FormClosed(object sender, FormClosedEventArgs e)
@@ -92,7 +94,7 @@ namespace tbm_launcher
             string newConfigName = "新建配置项 (" + newConfigCount + ")";
             LaunchInfoData item = new LaunchInfoData();
             item.Name = newConfigName;
-            item.SectionName = LauncherConfigFile.CreateUniqueSectionName(GetExistingSectionNames(), "config_item");
+            item.SectionName = LauncherConfigFile.CreateRandomSectionName(GetExistingSectionNames());
             int currentIndex = listConfig.SelectedIndex;
             int insertIndex = currentIndex >= 0 ? currentIndex + 1 : 0;
             listConfig.Items.Insert(insertIndex, item);
@@ -170,7 +172,7 @@ namespace tbm_launcher
             LaunchInfoData source = listConfig.Items[selectedIndex] as LaunchInfoData;
             LaunchInfoData copy = source.Clone();
             copy.Name = copy.Name + " (Copy)";
-            copy.SectionName = LauncherConfigFile.CreateUniqueSectionName(GetExistingSectionNames(), copy.SectionName + "_copy");
+            copy.SectionName = LauncherConfigFile.CreateRandomSectionName(GetExistingSectionNames());
             listConfig.Items.Insert(selectedIndex + 1, copy);
             listConfig.SelectedIndex = selectedIndex + 1;
         }
@@ -222,14 +224,7 @@ namespace tbm_launcher
                 GetValueHandler = p => p.PortNumber.ToString(),
                 SetValueHandler = (p, val) =>
                 {
-                    try
-                    {
-                        p.PortNumber = Int32.Parse(val);
-                    }
-                    catch
-                    {
-                        p.PortNumber = 0;
-                    }
+                    p.SetFieldsFromRawString("port", val);
                 }
             });
 
@@ -259,7 +254,7 @@ namespace tbm_launcher
                     new MetaInformation<LaunchInfoData>.ListItem { Name = "不检查运行状态", Value = StatusCheckMethodEnum.NO_CHECK }
                 },
                 GetValueHandler = p => p.StatusCheckMethod,
-                SetValueHandler = (p, val) => { p.StatusCheckMethod = val; }
+                SetValueHandler = (p, val) => { p.SetFieldsFromRawString("status_check_method", val); }
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -291,7 +286,7 @@ namespace tbm_launcher
                 FriendlyConfigName = "在后台运行",
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_BOOL,
                 GetValueHandler = p => p.RunBackground ? "1" : "0",
-                SetValueHandler = (p, val) => { p.RunBackground = val == "1"; }
+                SetValueHandler = (p, val) => { p.SetFieldsFromRawString("run_background", val); }
             });
 
             MetaInformation<LaunchInfoData>.ValueFillHandler = LaunchInfoData.GetFieldValueString;
@@ -300,11 +295,11 @@ namespace tbm_launcher
         private void RenderConfigItemList()
         {
             listConfig.Items.Clear();
-            if (IniConfigureList != null)
+            if (loadedConfig != null)
             {
-                foreach (ServiceItemControlGroup info in IniConfigureList)
+                foreach (LaunchInfoData item in loadedConfig.Items)
                 {
-                    listConfig.Items.Add(info.Data);
+                    listConfig.Items.Add(item);
                 }
             }
 
@@ -372,6 +367,27 @@ namespace tbm_launcher
             }
 
             return maxEpoch;
+        }
+
+        private void LoadRawConfiguration()
+        {
+            try
+            {
+                loadedConfig = LauncherConfigFile.LoadRaw(ProgramGlobalConfig.ConfigFilePath);
+            }
+            catch (LauncherConfigException ex)
+            {
+                string errorText = ex.LineNumber > 0
+                    ? "加载原始配置失败: Line " + ex.LineNumber + ": " + ex.Message
+                    : "加载原始配置失败: " + ex.Message;
+                MessageBox.Show(errorText);
+                loadedConfig = new LauncherAppConfig();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("加载原始配置失败: " + ex.Message);
+                loadedConfig = new LauncherAppConfig();
+            }
         }
     }
 }

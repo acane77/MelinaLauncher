@@ -40,7 +40,18 @@ namespace tbm_launcher
 
             string rawText = File.ReadAllText(filePath, Encoding.UTF8);
             string expandedText = Expand(rawText ?? string.Empty);
-            return Parse(expandedText);
+            return Parse(expandedText, false);
+        }
+
+        public static LauncherAppConfig LoadRaw(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                return new LauncherAppConfig();
+            }
+
+            string rawText = File.ReadAllText(filePath, Encoding.UTF8);
+            return Parse(rawText ?? string.Empty, true);
         }
 
         public static void Save(string filePath, LauncherAppConfig config)
@@ -64,12 +75,12 @@ namespace tbm_launcher
                 builder.Append("name = ").AppendLine(ToTomlString(item.Name ?? string.Empty));
                 builder.Append("command = ").AppendLine(ToTomlString(item.Command ?? string.Empty));
                 builder.Append("stop_command = ").AppendLine(ToTomlString(item.StopCommand ?? string.Empty));
-                builder.Append("port = ").AppendLine(item.PortNumber.ToString());
+                builder.Append("port = ").AppendLine(SerializePortValue(item));
                 builder.Append("requirement_command = ").AppendLine(ToTomlString(item.RequirementCommand ?? string.Empty));
-                builder.Append("status_check_method = ").AppendLine(ToTomlString(item.StatusCheckMethod ?? string.Empty));
+                builder.Append("status_check_method = ").AppendLine(ToTomlString(item.GetFieldValueString("status_check_method") ?? string.Empty));
                 builder.Append("workdir = ").AppendLine(ToTomlString(item.WorkingDirectory ?? string.Empty));
                 builder.Append("executable_name = ").AppendLine(ToTomlString(item.ExecutableName ?? string.Empty));
-                builder.Append("run_background = ").AppendLine(item.RunBackground ? "true" : "false");
+                builder.Append("run_background = ").AppendLine(SerializeRunBackgroundValue(item));
             }
 
             return builder.ToString();
@@ -113,10 +124,6 @@ namespace tbm_launcher
                 {
                     throw new LauncherConfigException("配置标识重复: " + item.SectionName);
                 }
-
-                item.SetFieldsFromString("port", item.PortNumber.ToString());
-                item.SetFieldsFromString("status_check_method", item.StatusCheckMethod ?? string.Empty);
-                item.SetFieldsFromString("run_background", item.RunBackground ? "true" : "false");
             }
         }
 
@@ -166,6 +173,20 @@ namespace tbm_launcher
             return seed + "_copy";
         }
 
+        public static string CreateRandomSectionName(IEnumerable<string> existingNames)
+        {
+            var usedNames = new HashSet<string>((existingNames ?? Enumerable.Empty<string>()).Where(n => !string.IsNullOrWhiteSpace(n)), StringComparer.OrdinalIgnoreCase);
+
+            while (true)
+            {
+                string candidate = "config_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                if (!usedNames.Contains(candidate))
+                {
+                    return candidate;
+                }
+            }
+        }
+
         public static string SanitizeSectionNameCandidate(string candidate)
         {
             string source = string.IsNullOrWhiteSpace(candidate) ? "config_item" : candidate.Trim();
@@ -196,7 +217,7 @@ namespace tbm_launcher
             return sanitized;
         }
 
-        private static LauncherAppConfig Parse(string text)
+        private static LauncherAppConfig Parse(string text, bool preserveRawValues)
         {
             var config = new LauncherAppConfig();
             LaunchInfoData currentItem = null;
@@ -270,7 +291,14 @@ namespace tbm_launcher
 
                 try
                 {
-                    currentItem.SetFieldsFromString(loweredKey, value);
+                    if (preserveRawValues)
+                    {
+                        currentItem.SetFieldsFromRawString(loweredKey, value);
+                    }
+                    else
+                    {
+                        currentItem.SetFieldsFromString(loweredKey, value);
+                    }
                 }
                 catch (InvalidConfigureValueError ex)
                 {
@@ -649,6 +677,34 @@ namespace tbm_launcher
             }
             builder.Append('"');
             return builder.ToString();
+        }
+
+        private static string SerializePortValue(LaunchInfoData item)
+        {
+            string value = item.GetFieldValueString("port") ?? string.Empty;
+            int portNumber;
+            if (Int32.TryParse(value, out portNumber) && portNumber >= 0 && portNumber <= 65535)
+            {
+                return portNumber.ToString();
+            }
+
+            return ToTomlString(value);
+        }
+
+        private static string SerializeRunBackgroundValue(LaunchInfoData item)
+        {
+            string value = item.GetFieldValueString("run_background") ?? string.Empty;
+            if (string.Equals(value, "1", StringComparison.Ordinal) || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase))
+            {
+                return "true";
+            }
+
+            if (string.Equals(value, "0", StringComparison.Ordinal) || string.Equals(value, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                return "false";
+            }
+
+            return ToTomlString(value);
         }
     }
 }

@@ -39,9 +39,12 @@ namespace tbm_launcher
         public string Command = string.Empty;
         public string StopCommand = string.Empty;
         public int PortNumber = 0;
+        public string RawPortValue;
         public string RequirementCommand = string.Empty;
         public string StatusCheckMethod = StatusCheckMethodEnum.CHECK_PORT_USAGE;
+        public string RawStatusCheckMethodValue;
         public bool RunBackground = false;
+        public string RawRunBackgroundValue;
         public string WorkingDirectory = string.Empty;
         public string ExecutableName = string.Empty;
 
@@ -78,6 +81,7 @@ namespace tbm_launcher
                 case "port":
                     try
                     {
+                        RawPortValue = value;
                         int portNumber;
                         if (string.IsNullOrWhiteSpace(value))
                         {
@@ -104,6 +108,7 @@ namespace tbm_launcher
                     RequirementCommand = value ?? string.Empty;
                     break;
                 case "status_check_method":
+                    RawStatusCheckMethodValue = value;
                     if (value != StatusCheckMethodEnum.CHECK_EXECUTABLE_EXISTANCE
                         && value != StatusCheckMethodEnum.CHECK_PORT_USAGE
                         && value != StatusCheckMethodEnum.NO_CHECK)
@@ -118,6 +123,57 @@ namespace tbm_launcher
                     StatusCheckMethod = value;
                     break;
                 case "run_background":
+                    RawRunBackgroundValue = value;
+                    RunBackground = string.Equals(value, "1", StringComparison.Ordinal)
+                        || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+                    break;
+                case "workdir":
+                    WorkingDirectory = value ?? string.Empty;
+                    break;
+                case "executable_name":
+                    ExecutableName = value ?? string.Empty;
+                    break;
+                default:
+                    throw new InvalidConfigureValueError("没有此配置项：" + setting_name);
+            }
+        }
+
+        public void SetFieldsFromRawString(string setting_name, string value)
+        {
+            switch (setting_name)
+            {
+                case "comment":
+                    break;
+                case "name":
+                    Name = value ?? string.Empty;
+                    break;
+                case "command":
+                    Command = value ?? string.Empty;
+                    break;
+                case "stop_command":
+                    StopCommand = value ?? string.Empty;
+                    break;
+                case "port":
+                    RawPortValue = value;
+                    int parsedPort;
+                    if (Int32.TryParse(value, out parsedPort) && parsedPort >= 0 && parsedPort <= 65535)
+                    {
+                        PortNumber = parsedPort;
+                    }
+                    else
+                    {
+                        PortNumber = 0;
+                    }
+                    break;
+                case "requirement_command":
+                    RequirementCommand = value ?? string.Empty;
+                    break;
+                case "status_check_method":
+                    RawStatusCheckMethodValue = value;
+                    StatusCheckMethod = value ?? string.Empty;
+                    break;
+                case "run_background":
+                    RawRunBackgroundValue = value;
                     RunBackground = string.Equals(value, "1", StringComparison.Ordinal)
                         || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
                     break;
@@ -145,13 +201,13 @@ namespace tbm_launcher
                 case "stop_command":
                     return StopCommand;
                 case "port":
-                    return PortNumber.ToString();
+                    return RawPortValue ?? PortNumber.ToString();
                 case "requirement_command":
                     return RequirementCommand;
                 case "status_check_method":
-                    return StatusCheckMethod;
+                    return RawStatusCheckMethodValue ?? StatusCheckMethod;
                 case "run_background":
-                    return RunBackground ? "1" : "0";
+                    return RawRunBackgroundValue ?? (RunBackground ? "1" : "0");
                 case "workdir":
                     return WorkingDirectory;
                 case "executable_name":
