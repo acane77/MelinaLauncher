@@ -184,6 +184,7 @@ namespace tbm_launcher
             btn_launch.Text = AppLocalization.Get("Main.BatchStart");
             btn_stop.Text = AppLocalization.Get("Main.BatchStop");
             button1.Text = AppLocalization.Get("Main.Refresh");
+            UpdateSystemMenuText();
         }
     }
 }
