@@ -161,7 +161,7 @@ namespace tbm_launcher
             string configFilePath = ProgramGlobalConfig.ConfigFilePath;
             if (!File.Exists(configFilePath))
             {
-                LauncherConfigFile.Save(configFilePath, new LauncherAppConfig());
+                LauncherConfigFile.Save(configFilePath, LauncherConfigFile.CreateDefaultConfig());
             }
         }
 

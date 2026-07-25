@@ -143,11 +143,77 @@ namespace tbm_launcher
         private static readonly Regex PlaceholderRegex = new Regex(@"\{([A-Za-z0-9_\-.,]+)\}", RegexOptions.Compiled);
         private static readonly Regex SectionNameRegex = new Regex(@"^[A-Za-z0-9_-]+$", RegexOptions.Compiled);
 
+        public static LauncherAppConfig CreateDefaultConfig()
+        {
+            var config = new LauncherAppConfig();
+            config.Items.Add(CreateDefaultItem(
+                "config_title",
+                "Melina Launcher",
+                true,
+                false,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                0,
+                string.Empty,
+                null,
+                StatusCheckMethodEnum.NO_CHECK,
+                string.Empty,
+                string.Empty,
+                false));
+            config.Items.Add(CreateDefaultItem(
+                "config_about",
+                "View Source Code and Manual on GitHub",
+                false,
+                false,
+                "explorer.exe https://github.com/acane77/MelinaLauncher",
+                string.Empty,
+                string.Empty,
+                0,
+                string.Empty,
+                null,
+                StatusCheckMethodEnum.NO_CHECK,
+                string.Empty,
+                string.Empty,
+                true));
+            config.Items.Add(CreateDefaultItem(
+                "config_license",
+                "About {config_title.name}",
+                true,
+                false,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                0,
+                string.Empty,
+                new[] { "sdsdsds" },
+                StatusCheckMethodEnum.NO_CHECK,
+                string.Empty,
+                string.Empty,
+                false));
+            config.Items.Add(CreateDefaultItem(
+                "config_mit_license",
+                "License: MIT License",
+                false,
+                false,
+                "{config_about.command}/blob/master/LICENSE",
+                string.Empty,
+                string.Empty,
+                0,
+                string.Empty,
+                null,
+                StatusCheckMethodEnum.NO_CHECK,
+                string.Empty,
+                string.Empty,
+                true));
+            return config;
+        }
+
         public static LauncherAppConfig Load(string filePath)
         {
             if (!File.Exists(filePath))
             {
-                return new LauncherAppConfig();
+                return CreateDefaultConfig();
             }
 
             string rawText = File.ReadAllText(filePath, Encoding.UTF8);
@@ -159,7 +225,7 @@ namespace tbm_launcher
         {
             if (!File.Exists(filePath))
             {
-                return new LauncherAppConfig();
+                return CreateDefaultConfig();
             }
 
             string rawText = File.ReadAllText(filePath, Encoding.UTF8);
@@ -339,6 +405,42 @@ namespace tbm_launcher
             }
 
             return sanitized;
+        }
+
+        private static LaunchInfoData CreateDefaultItem(
+            string sectionName,
+            string name,
+            bool displayBold,
+            bool disabled,
+            string command,
+            string stopCommand,
+            string portClickCommand,
+            int port,
+            string requirementCommand,
+            IEnumerable<string> environs,
+            string statusCheckMethod,
+            string workingDirectory,
+            string executableName,
+            bool runBackground)
+        {
+            var item = new LaunchInfoData
+            {
+                SectionName = sectionName ?? string.Empty,
+                Name = name ?? string.Empty,
+                DisplayBold = displayBold,
+                Disabled = disabled,
+                Command = command ?? string.Empty,
+                StopCommand = stopCommand ?? string.Empty,
+                PortClickCommand = portClickCommand ?? string.Empty,
+                PortNumber = port,
+                RequirementCommand = requirementCommand ?? string.Empty,
+                StatusCheckMethod = statusCheckMethod ?? StatusCheckMethodEnum.NO_CHECK,
+                WorkingDirectory = workingDirectory ?? string.Empty,
+                ExecutableName = executableName ?? string.Empty,
+                RunBackground = runBackground
+            };
+            item.SetEnvirons(environs);
+            return item;
         }
 
         private static LauncherAppConfig Parse(string text, bool preserveRawValues)
