@@ -37,12 +37,14 @@ namespace tbm_launcher
         public delegate void SetValueT(ValueType valueObj, string value);
         public delegate IList<string> GetStringArrayT(ValueType valueObj);
         public delegate void SetStringArrayT(ValueType valueObj, IList<string> value);
+        public delegate string GetReferenceSectionNameT(ValueType valueObj);
         public delegate string ValueFillHandlerT(string configName, ValueType valueType);
         public Validator<string> ValidateInputHandler = null;
         public GetValueT GetValueHandler = null;
         public SetValueT SetValueHandler = null;
         public GetStringArrayT GetStringArrayHandler = null;
         public SetStringArrayT SetStringArrayHandler = null;
+        public GetReferenceSectionNameT GetReferenceSectionNameHandler = null;
         public static ValueFillHandlerT ValueFillHandler = null;
 
         public const int CONFIG_TYPE_LIST = 1;
@@ -58,6 +60,40 @@ namespace tbm_launcher
         public int ConfigType;
         public List<ListItem> ListItems;
 
+        private void TryCopyReferenceToClipboard(ValueType info)
+        {
+            string sectionName = GetReferenceSectionNameHandler == null
+                ? string.Empty
+                : GetReferenceSectionNameHandler(info);
+            if (string.IsNullOrWhiteSpace(sectionName)
+                || string.IsNullOrWhiteSpace(ConfigName)
+                || string.Equals(ConfigName, "section_name", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            try
+            {
+                Clipboard.SetText("{" + sectionName + "." + ConfigName + "}");
+            }
+            catch
+            {
+            }
+        }
+
+        private void BindReferenceCopy(Control control, ValueType info)
+        {
+            if (control == null)
+            {
+                return;
+            }
+
+            control.DoubleClick += (object _s, EventArgs _e) =>
+            {
+                TryCopyReferenceToClipboard(info);
+            };
+        }
+
         private void RenderControl(int index, string value, ValueType info, Control container)
         {
             int baseHeight = index * 30 + 25;
@@ -71,6 +107,7 @@ namespace tbm_launcher
             labelConfigName.FlatStyle = FlatStyle.System;
             labelConfigName.Location = new Point(baseTitleLeft, baseHeight + 3);
             labelConfigName.Size = new Size(baseValueLeft - baseTitleLeft, 22);
+            BindReferenceCopy(labelConfigName, info);
             container.Controls.Add(labelConfigName);
 
             Control valueControl = null;
@@ -195,6 +232,7 @@ namespace tbm_launcher
 
                     checkbox.Text = labelConfigName.Text;
                     labelConfigName.Text = "";
+                    BindReferenceCopy(checkbox, info);
                 }
                 else
                 {

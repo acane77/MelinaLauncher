@@ -186,7 +186,8 @@ namespace tbm_launcher
                 FriendlyConfigName = "配置标识",
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING,
                 GetValueHandler = p => p.SectionName,
-                SetValueHandler = (p, val) => { p.SectionName = val; }
+                SetValueHandler = (p, val) => { p.SectionName = val; },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -195,7 +196,8 @@ namespace tbm_launcher
                 FriendlyConfigName = "服务名称",
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING,
                 GetValueHandler = p => p.Name,
-                SetValueHandler = (p, val) => { p.Name = val; listConfig.Invalidate(); }
+                SetValueHandler = (p, val) => { p.Name = val; listConfig.Invalidate(); },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -204,7 +206,8 @@ namespace tbm_launcher
                 FriendlyConfigName = "启动命令",
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_FILE,
                 GetValueHandler = p => p.Command,
-                SetValueHandler = (p, val) => { p.Command = val; }
+                SetValueHandler = (p, val) => { p.Command = val; },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -213,7 +216,8 @@ namespace tbm_launcher
                 FriendlyConfigName = "停止命令",
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_FILE,
                 GetValueHandler = p => p.StopCommand,
-                SetValueHandler = (p, val) => { p.StopCommand = val; }
+                SetValueHandler = (p, val) => { p.StopCommand = val; },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -225,7 +229,8 @@ namespace tbm_launcher
                 SetValueHandler = (p, val) =>
                 {
                     p.SetFieldsFromRawString("port", val);
-                }
+                },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -239,7 +244,8 @@ namespace tbm_launcher
                     new MetaInformation<LaunchInfoData>.ListItem { Name = "不检查依赖", Value = "DO_NOT_CHECK" },
                 },
                 GetValueHandler = p => p.RequirementCommand,
-                SetValueHandler = (p, val) => { p.RequirementCommand = val; }
+                SetValueHandler = (p, val) => { p.RequirementCommand = val; },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -254,7 +260,8 @@ namespace tbm_launcher
                     new MetaInformation<LaunchInfoData>.ListItem { Name = "不检查运行状态", Value = StatusCheckMethodEnum.NO_CHECK }
                 },
                 GetValueHandler = p => p.StatusCheckMethod,
-                SetValueHandler = (p, val) => { p.SetFieldsFromRawString("status_check_method", val); }
+                SetValueHandler = (p, val) => { p.SetFieldsFromRawString("status_check_method", val); },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -263,7 +270,8 @@ namespace tbm_launcher
                 FriendlyConfigName = "工作目录",
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_DIRECTORY,
                 GetValueHandler = p => p.WorkingDirectory,
-                SetValueHandler = (p, val) => { p.WorkingDirectory = val; }
+                SetValueHandler = (p, val) => { p.WorkingDirectory = val; },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -273,7 +281,8 @@ namespace tbm_launcher
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING_ARRAY,
                 GetValueHandler = p => string.Join(";", p.GetEnvironsCopy()),
                 GetStringArrayHandler = p => p.GetEnvironsCopy(),
-                SetStringArrayHandler = (p, val) => { p.SetEnvirons(val); }
+                SetStringArrayHandler = (p, val) => { p.SetEnvirons(val); },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -287,7 +296,8 @@ namespace tbm_launcher
                     new MetaInformation<LaunchInfoData>.ListItem { Name = "使用正则表达式(以/开头和结尾)", Value = "//" },
                 },
                 GetValueHandler = p => p.ExecutableName,
-                SetValueHandler = (p, val) => { p.ExecutableName = val; }
+                SetValueHandler = (p, val) => { p.ExecutableName = val; },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
@@ -296,7 +306,8 @@ namespace tbm_launcher
                 FriendlyConfigName = "在后台运行",
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_BOOL,
                 GetValueHandler = p => p.RunBackground ? "1" : "0",
-                SetValueHandler = (p, val) => { p.SetFieldsFromRawString("run_background", val); }
+                SetValueHandler = (p, val) => { p.SetFieldsFromRawString("run_background", val); },
+                GetReferenceSectionNameHandler = p => p.SectionName
             });
 
             MetaInformation<LaunchInfoData>.ValueFillHandler = LaunchInfoData.GetFieldValueString;
