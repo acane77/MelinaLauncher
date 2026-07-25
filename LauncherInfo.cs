@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
@@ -40,6 +41,7 @@ namespace tbm_launcher
         public string StopCommand = string.Empty;
         public int PortNumber = 0;
         public string RawPortValue;
+        public List<string> Environs = new List<string>();
         public string RequirementCommand = string.Empty;
         public string StatusCheckMethod = StatusCheckMethodEnum.CHECK_PORT_USAGE;
         public string RawStatusCheckMethodValue;
@@ -204,6 +206,8 @@ namespace tbm_launcher
                     return RawPortValue ?? PortNumber.ToString();
                 case "requirement_command":
                     return RequirementCommand;
+                case "environs":
+                    return string.Join(";", Environs ?? new List<string>());
                 case "status_check_method":
                     return RawStatusCheckMethodValue ?? StatusCheckMethod;
                 case "run_background":
@@ -219,6 +223,18 @@ namespace tbm_launcher
         public static string GetFieldValueString(string n, LaunchInfoData _this)
         {
             return _this.GetFieldValueString(n);
+        }
+
+        public List<string> GetEnvironsCopy()
+        {
+            return new List<string>(Environs ?? new List<string>());
+        }
+
+        public void SetEnvirons(IEnumerable<string> values)
+        {
+            Environs = values == null
+                ? new List<string>()
+                : values.Where(value => value != null).ToList();
         }
 
         public LaunchInfoData Clone()
@@ -834,6 +850,23 @@ namespace tbm_launcher
                     process.StartInfo.FileName = "cmd.exe";
                     process.StartInfo.Arguments = "/c \"" + (command ?? string.Empty) + "\"";
                     process.StartInfo.CreateNoWindow = true;
+                    foreach (string environmentEntry in Data.Environs ?? new List<string>())
+                    {
+                        int separatorIndex = environmentEntry.IndexOf('=');
+                        if (separatorIndex <= 0)
+                        {
+                            continue;
+                        }
+
+                        string name = environmentEntry.Substring(0, separatorIndex).Trim();
+                        string value = environmentEntry.Substring(separatorIndex + 1);
+                        if (name.Length == 0)
+                        {
+                            continue;
+                        }
+
+                        process.StartInfo.EnvironmentVariables[name] = value;
+                    }
                     if (RunBackground)
                     {
                         process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;

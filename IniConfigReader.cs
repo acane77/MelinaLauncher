@@ -28,7 +28,7 @@ namespace tbm_launcher
     static class LauncherConfigFile
     {
         private const int MaxExpansionRounds = 50;
-        private static readonly Regex PlaceholderRegex = new Regex(@"\{([A-Za-z0-9_\-.]+)\}", RegexOptions.Compiled);
+        private static readonly Regex PlaceholderRegex = new Regex(@"\{([A-Za-z0-9_\-.,]+)\}", RegexOptions.Compiled);
         private static readonly Regex SectionNameRegex = new Regex(@"^[A-Za-z0-9_-]+$", RegexOptions.Compiled);
 
         public static LauncherAppConfig Load(string filePath)
@@ -77,6 +77,10 @@ namespace tbm_launcher
                 builder.Append("stop_command = ").AppendLine(ToTomlString(item.StopCommand ?? string.Empty));
                 builder.Append("port = ").AppendLine(SerializePortValue(item));
                 builder.Append("requirement_command = ").AppendLine(ToTomlString(item.RequirementCommand ?? string.Empty));
+                if (item.Environs != null && item.Environs.Count > 0)
+                {
+                    builder.Append("environs = ").AppendLine(ToTomlStringArray(item.Environs));
+                }
                 builder.Append("status_check_method = ").AppendLine(ToTomlString(item.GetFieldValueString("status_check_method") ?? string.Empty));
                 builder.Append("workdir = ").AppendLine(ToTomlString(item.WorkingDirectory ?? string.Empty));
                 builder.Append("executable_name = ").AppendLine(ToTomlString(item.ExecutableName ?? string.Empty));
@@ -277,11 +281,11 @@ namespace tbm_launcher
                     throw new LauncherConfigException("配置项格式错误。", lineNumber);
                 }
 
-                string value = ParseScalarValue(rawValue, lineNumber);
                 string loweredKey = key.Trim().ToLowerInvariant();
 
                 if (string.Equals(currentSection, ProgramGlobalConfig.SystemSectionName, StringComparison.OrdinalIgnoreCase))
                 {
+                    string value = ParseScalarValue(rawValue, lineNumber);
                     if (loweredKey == "title")
                     {
                         config.Title = value;
@@ -291,13 +295,26 @@ namespace tbm_launcher
 
                 try
                 {
-                    if (preserveRawValues)
+                    if (loweredKey == "environs")
                     {
-                        currentItem.SetFieldsFromRawString(loweredKey, value);
+                        List<string> environs;
+                        if (!TryParseStringArray(rawValue, out environs))
+                        {
+                            throw new LauncherConfigException("environs 需要是字符串数组。", lineNumber);
+                        }
+                        currentItem.SetEnvirons(environs);
                     }
                     else
                     {
-                        currentItem.SetFieldsFromString(loweredKey, value);
+                        string value = ParseScalarValue(rawValue, lineNumber);
+                        if (preserveRawValues)
+                        {
+                            currentItem.SetFieldsFromRawString(loweredKey, value);
+                        }
+                        else
+                        {
+                            currentItem.SetFieldsFromString(loweredKey, value);
+                        }
                     }
                 }
                 catch (InvalidConfigureValueError ex)
@@ -340,6 +357,19 @@ namespace tbm_launcher
                 string rawValue;
                 if (!TrySplitKeyValueLine(line, out key, out rawValue))
                 {
+                    continue;
+                }
+
+                List<string> parsedArray;
+                if (TryParseStringArray(rawValue, out parsedArray))
+                {
+                    string joinedValue = string.Join(";", parsedArray);
+                    string currentKey = currentSection + "." + key.Trim();
+                    values[currentKey] = joinedValue;
+                    for (int arrayIndex = 0; arrayIndex < parsedArray.Count; arrayIndex++)
+                    {
+                        values[currentKey + "," + arrayIndex] = parsedArray[arrayIndex];
+                    }
                     continue;
                 }
 
@@ -405,12 +435,6 @@ namespace tbm_launcher
                 {
                     return localValue;
                 }
-                return null;
-            }
-
-            int dotIndex = token.IndexOf('.');
-            if (dotIndex <= 0 || dotIndex >= token.Length - 1)
-            {
                 return null;
             }
 
@@ -530,6 +554,89 @@ namespace tbm_launcher
             }
 
             parsedValue = trimmed;
+            return true;
+        }
+
+        private static bool TryParseStringArray(string rawValue, out List<string> parsedValues)
+        {
+            parsedValues = null;
+            string trimmed = StripInlineComment(rawValue).Trim();
+            if (!trimmed.StartsWith("[", StringComparison.Ordinal) || !trimmed.EndsWith("]", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            string content = trimmed.Substring(1, trimmed.Length - 2).Trim();
+            parsedValues = new List<string>();
+            if (content.Length == 0)
+            {
+                return true;
+            }
+
+            var currentItem = new StringBuilder();
+            bool inDoubleQuote = false;
+            bool inSingleQuote = false;
+            bool escaping = false;
+            var rawItems = new List<string>();
+
+            for (int index = 0; index < content.Length; index++)
+            {
+                char ch = content[index];
+                currentItem.Append(ch);
+
+                if (escaping)
+                {
+                    escaping = false;
+                    continue;
+                }
+
+                if (ch == '\\' && inDoubleQuote)
+                {
+                    escaping = true;
+                    continue;
+                }
+
+                if (ch == '"' && !inSingleQuote)
+                {
+                    inDoubleQuote = !inDoubleQuote;
+                    continue;
+                }
+
+                if (ch == '\'' && !inDoubleQuote)
+                {
+                    inSingleQuote = !inSingleQuote;
+                    continue;
+                }
+
+                if (ch == ',' && !inDoubleQuote && !inSingleQuote)
+                {
+                    rawItems.Add(currentItem.ToString(0, currentItem.Length - 1));
+                    currentItem.Clear();
+                }
+            }
+
+            if (inDoubleQuote || inSingleQuote || escaping)
+            {
+                parsedValues = null;
+                return false;
+            }
+
+            if (currentItem.Length > 0)
+            {
+                rawItems.Add(currentItem.ToString());
+            }
+
+            foreach (string rawItem in rawItems)
+            {
+                string parsedItem;
+                if (!TryParseScalarValue(rawItem, out parsedItem))
+                {
+                    parsedValues = null;
+                    return false;
+                }
+                parsedValues.Add(parsedItem);
+            }
+
             return true;
         }
 
@@ -677,6 +784,11 @@ namespace tbm_launcher
             }
             builder.Append('"');
             return builder.ToString();
+        }
+
+        private static string ToTomlStringArray(IEnumerable<string> values)
+        {
+            return "[" + string.Join(", ", (values ?? Enumerable.Empty<string>()).Select(ToTomlString)) + "]";
         }
 
         private static string SerializePortValue(LaunchInfoData item)

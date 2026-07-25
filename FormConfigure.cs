@@ -268,6 +268,16 @@ namespace tbm_launcher
 
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
+                ConfigName = "environs",
+                FriendlyConfigName = "环境变量",
+                ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING_ARRAY,
+                GetValueHandler = p => string.Join(";", p.GetEnvironsCopy()),
+                GetStringArrayHandler = p => p.GetEnvironsCopy(),
+                SetStringArrayHandler = (p, val) => { p.SetEnvirons(val); }
+            });
+
+            settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
+            {
                 ConfigName = "executable_name",
                 FriendlyConfigName = "可执行文件名称",
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING,

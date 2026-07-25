@@ -99,6 +99,8 @@ namespace tbm_launcher
     {
         public object mouseItem;
         private CusomizedListBoxItemCollection m_Items;
+        private readonly TextBox inlineEditor;
+        private int editingIndex = -1;
 
         public Color _MoveItemBackColor = Color.FromArgb(255, 229, 243, 255);
         public Color _SelectedItemBackColor = Color.FromArgb(255, 204, 232, 255);
@@ -106,6 +108,7 @@ namespace tbm_launcher
         public Color _SelectedItemUnfocusedBackColor = Color.FromArgb(255, 217, 217, 217);
 
         public int HoverIndex { get; set; }
+        public bool EnableInlineStringEditing { get; set; }
 
         public CusomizedListBox() : base()
         {
@@ -121,6 +124,14 @@ namespace tbm_launcher
             this.SetStyle(ControlStyles.SupportsTransparentBackColor, true); // 开启控件透明
 
             HoverIndex = -1;
+            EnableInlineStringEditing = false;
+
+            inlineEditor = new TextBox();
+            inlineEditor.Visible = false;
+            inlineEditor.BorderStyle = BorderStyle.FixedSingle;
+            inlineEditor.KeyDown += InlineEditor_KeyDown;
+            inlineEditor.LostFocus += InlineEditor_LostFocus;
+            Controls.Add(inlineEditor);
         }
 
         public new CusomizedListBoxItemCollection Items => m_Items;
@@ -242,11 +253,103 @@ namespace tbm_launcher
             base.OnMouseClick(e);
 
         }
+
+        protected override void OnMouseDoubleClick(MouseEventArgs e)
+        {
+            base.OnMouseDoubleClick(e);
+
+            if (!EnableInlineStringEditing)
+            {
+                return;
+            }
+
+            int index = IndexFromPoint(e.Location);
+            if (index < 0 || index >= Items.Count)
+            {
+                return;
+            }
+
+            BeginEdit(index);
+        }
+
         protected override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
             this.mouseItem = null;
             this.Invalidate();
+        }
+
+        public void BeginEditSelectedItem()
+        {
+            if (SelectedIndex >= 0)
+            {
+                BeginEdit(SelectedIndex);
+            }
+        }
+
+        public void BeginEdit(int index)
+        {
+            if (!EnableInlineStringEditing || index < 0 || index >= Items.Count)
+            {
+                return;
+            }
+
+            object item = Items[index];
+            if (!(item is string))
+            {
+                return;
+            }
+
+            editingIndex = index;
+            SelectedIndex = index;
+
+            Rectangle bounds = GetItemRectangle(index);
+            inlineEditor.Bounds = new Rectangle(bounds.Left + 1, bounds.Top + 1, Math.Max(20, bounds.Width - 2), Math.Max(20, bounds.Height - 2));
+            inlineEditor.Text = item.ToString();
+            inlineEditor.Visible = true;
+            inlineEditor.BringToFront();
+            inlineEditor.Focus();
+            inlineEditor.SelectAll();
+        }
+
+        private void EndEdit(bool commit)
+        {
+            if (editingIndex < 0)
+            {
+                inlineEditor.Visible = false;
+                return;
+            }
+
+            if (commit && editingIndex < Items.Count && Items[editingIndex] is string)
+            {
+                Items[editingIndex] = inlineEditor.Text;
+            }
+
+            editingIndex = -1;
+            inlineEditor.Visible = false;
+            Focus();
+            Invalidate();
+        }
+
+        private void InlineEditor_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                EndEdit(true);
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                EndEdit(false);
+            }
+        }
+
+        private void InlineEditor_LostFocus(object sender, EventArgs e)
+        {
+            EndEdit(true);
         }
     }
 }

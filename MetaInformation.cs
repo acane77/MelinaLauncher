@@ -35,10 +35,14 @@ namespace tbm_launcher
         public delegate ValidateResult Validator<T>(T value);
         public delegate string GetValueT(ValueType valueObj);
         public delegate void SetValueT(ValueType valueObj, string value);
+        public delegate IList<string> GetStringArrayT(ValueType valueObj);
+        public delegate void SetStringArrayT(ValueType valueObj, IList<string> value);
         public delegate string ValueFillHandlerT(string configName, ValueType valueType);
         public Validator<string> ValidateInputHandler = null;
         public GetValueT GetValueHandler = null;
         public SetValueT SetValueHandler = null;
+        public GetStringArrayT GetStringArrayHandler = null;
+        public SetStringArrayT SetStringArrayHandler = null;
         public static ValueFillHandlerT ValueFillHandler = null;
 
         public const int CONFIG_TYPE_LIST = 1;
@@ -48,6 +52,7 @@ namespace tbm_launcher
         public const int CONFIG_TYPE_DECIMAL = 5;
         public const int CONFIG_TYPE_BOOL = 6;
         public const int CONFIG_TYPE_DIRECTORY = 7;
+        public const int CONFIG_TYPE_STRING_ARRAY = 8;
         public string ConfigName;
         public string FriendlyConfigName;
         public int ConfigType;
@@ -69,6 +74,7 @@ namespace tbm_launcher
             container.Controls.Add(labelConfigName);
 
             Control valueControl = null;
+            Control additionalButton = null;
             if (settingItem.ConfigType == CONFIG_TYPE_STRING
                 || settingItem.ConfigType == CONFIG_TYPE_FILE
                 || settingItem.ConfigType == CONFIG_TYPE_INT
@@ -200,9 +206,40 @@ namespace tbm_launcher
                     valueControl.Text = value;
                 }
             }
+            else if (settingItem.ConfigType == CONFIG_TYPE_STRING_ARRAY)
+            {
+                TextBox valueCtrl = new TextBox();
+                valueCtrl.ReadOnly = true;
+                valueCtrl.Text = value;
+                valueControl = valueCtrl;
+
+                int additionalButtonWidth = 50;
+                int baseAdditionalButtonRight = baseValueRight;
+                baseValueRight += additionalButtonWidth;
+
+                Button button = new Button();
+                button.Text = "编辑...";
+                button.Location = new Point(container.Width - baseAdditionalButtonRight - additionalButtonWidth, baseHeight - 3);
+                button.FlatStyle = FlatStyle.System;
+                button.Size = new Size(additionalButtonWidth, 28);
+                button.Click += (object _s, EventArgs _e) =>
+                {
+                    var dialog = new FormStringArrayEditor();
+                    dialog.Text = settingItem.FriendlyConfigName;
+                    dialog.SetItems(settingItem.GetStringArrayHandler == null
+                        ? new List<string>()
+                        : settingItem.GetStringArrayHandler(info));
+                    if (dialog.ShowDialog(container.FindForm()) == DialogResult.OK)
+                    {
+                        var items = dialog.GetItems();
+                        settingItem.SetStringArrayHandler?.Invoke(info, items);
+                        valueCtrl.Text = string.Join(";", items);
+                    }
+                };
+                additionalButton = button;
+            }
             valueControl.Location = new Point(baseValueLeft, baseHeight + baseValueHeightOffset);
             valueControl.Size = new Size(container.Width - baseValueLeft - baseValueRight, 22);
-            Control additionalButton = null;
             // add special buttons for certain ConfigTypes
             if (settingItem.ConfigType == CONFIG_TYPE_FILE ||
                 settingItem.ConfigType == CONFIG_TYPE_DIRECTORY)
