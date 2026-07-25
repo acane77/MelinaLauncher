@@ -929,23 +929,30 @@ namespace tbm_launcher
                     process.StartInfo.FileName = "cmd.exe";
                     process.StartInfo.Arguments = "/c \"" + (command ?? string.Empty) + "\"";
                     process.StartInfo.CreateNoWindow = true;
-                    foreach (string environmentEntry in Data.Environs ?? new List<string>())
+
+                    if (Data.Environs.Count > 0)
                     {
-                        int separatorIndex = environmentEntry.IndexOf('=');
-                        if (separatorIndex <= 0)
+                        // .NET Framework requires UseShellExecute=false when custom environment variables are supplied.
+                        process.StartInfo.UseShellExecute = false;
+                        foreach (string environmentEntry in Data.Environs ?? new List<string>())
                         {
-                            continue;
-                        }
+                            int separatorIndex = environmentEntry.IndexOf('=');
+                            if (separatorIndex <= 0)
+                            {
+                                continue;
+                            }
 
-                        string name = environmentEntry.Substring(0, separatorIndex).Trim();
-                        string value = environmentEntry.Substring(separatorIndex + 1);
-                        if (name.Length == 0)
-                        {
-                            continue;
-                        }
+                            string name = environmentEntry.Substring(0, separatorIndex).Trim();
+                            string value = environmentEntry.Substring(separatorIndex + 1);
+                            if (name.Length == 0)
+                            {
+                                continue;
+                            }
 
-                        process.StartInfo.EnvironmentVariables[name] = value;
+                            process.StartInfo.EnvironmentVariables[name] = value;
+                        }
                     }
+                    
                     if (RunBackground)
                     {
                         process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
