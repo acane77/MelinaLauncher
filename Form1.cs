@@ -6,13 +6,14 @@ using System.Windows.Forms;
 
 namespace tbm_launcher
 {
-    public partial class Form1 : Form
+    public partial class Form1 : DpiAwareForm
     {
         private readonly List<ServiceItemControlGroup> LI = new List<ServiceItemControlGroup>();
 
         public Form1()
         {
             InitializeComponent();
+            InitializeDpiAwareness();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -120,6 +121,7 @@ namespace tbm_launcher
                 btn_launch.Visible = !config.HideOneKey;
                 btn_stop.Visible = !config.HideOneKey;
                 timerRefresh.Interval = Math.Max(1, config.CheckIntervalSeconds) * 1000;
+                ApplyServiceItemDpi();
                 timerRefresh.Enabled = true;
             }
             catch (LauncherConfigException ex)
@@ -149,6 +151,20 @@ namespace tbm_launcher
             if (!File.Exists(configFilePath))
             {
                 LauncherConfigFile.Save(configFilePath, new LauncherAppConfig());
+            }
+        }
+
+        protected override void OnAfterDpiChanged(int oldDpi, int newDpi)
+        {
+            base.OnAfterDpiChanged(oldDpi, newDpi);
+            ApplyServiceItemDpi();
+        }
+
+        private void ApplyServiceItemDpi()
+        {
+            foreach (ServiceItemControlGroup serviceItem in LI)
+            {
+                serviceItem.ApplyDpi(CurrentDpi);
             }
         }
     }

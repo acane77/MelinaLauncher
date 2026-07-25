@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace tbm_launcher
 {
-    public partial class FormConfigure : Form
+    public partial class FormConfigure : DpiAwareForm
     {
         private readonly List<MetaInformation<LaunchInfoData>> settingItemConfigs = new List<MetaInformation<LaunchInfoData>>();
         private readonly List<MetaInformation<SystemConfigData>> systemSettingConfigs = new List<MetaInformation<SystemConfigData>>();
@@ -71,6 +71,7 @@ namespace tbm_launcher
         public FormConfigure()
         {
             InitializeComponent();
+            InitializeDpiAwareness();
         }
 
         public List<ServiceItemControlGroup> IniConfigureList = null;
@@ -597,6 +598,13 @@ namespace tbm_launcher
         private void UpdateWindowTitle()
         {
             Text = "Configure " + (systemConfig.Title ?? string.Empty);
+        }
+
+        protected override void OnAfterDpiChanged(int oldDpi, int newDpi)
+        {
+            base.OnAfterDpiChanged(oldDpi, newDpi);
+            listConfig.ApplyDpiScaling(newDpi);
+            listConfig_SelectedIndexChanged(this, EventArgs.Empty);
         }
     }
 }

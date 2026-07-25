@@ -147,17 +147,18 @@ namespace tbm_launcher
 
         private void RenderControl(int index, string value, ValueType info, Control container)
         {
-            int baseHeight = index * 30 + 25;
-            int baseTitleLeft = 20;
-            int baseValueLeft = 120;
-            int baseValueRight = 20;
+            int currentDpi = DpiHelper.GetDpiForControl(container);
+            int baseHeight = DpiHelper.ScaleValue(25, currentDpi) + index * DpiHelper.ScaleValue(30, currentDpi);
+            int baseTitleLeft = DpiHelper.ScaleValue(20, currentDpi);
+            int baseValueLeft = DpiHelper.ScaleValue(120, currentDpi);
+            int baseValueRight = DpiHelper.ScaleValue(20, currentDpi);
             int baseValueHeightOffset = 0;
             MetaInformation<ValueType> settingItem = this;
             Label labelConfigName = new Label();
             labelConfigName.Text = settingItem.FriendlyConfigName;
             labelConfigName.FlatStyle = FlatStyle.System;
-            labelConfigName.Location = new Point(baseTitleLeft, baseHeight + 3);
-            labelConfigName.Size = new Size(baseValueLeft - baseTitleLeft, 22);
+            labelConfigName.Location = new Point(baseTitleLeft, baseHeight + DpiHelper.ScaleValue(3, currentDpi));
+            labelConfigName.Size = new Size(baseValueLeft - baseTitleLeft, DpiHelper.ScaleValue(22, currentDpi));
             BindReferenceCopy(labelConfigName, info);
             container.Controls.Add(labelConfigName);
 
@@ -171,7 +172,7 @@ namespace tbm_launcher
                 {
                     ComboBox comboBox = new ComboBox();
                     bool isUpdatingComboText = false;
-                    baseValueHeightOffset = -1;
+                    baseValueHeightOffset = -DpiHelper.ScaleValue(1, currentDpi);
                     foreach (ListItem item in settingItem.ListItems)
                         comboBox.Items.Add(item.Name ?? item.Value);
                     valueControl = comboBox;
@@ -336,14 +337,18 @@ namespace tbm_launcher
                 valueControl = valueCtrl;
 
                 int additionalButtonWidth = 50;
+                int scaledAdditionalButtonWidth = DpiHelper.ScaleValue(additionalButtonWidth, currentDpi);
+                int additionalButtonHeight = DpiHelper.ScaleValue(28, currentDpi);
                 int baseAdditionalButtonRight = baseValueRight;
-                baseValueRight += additionalButtonWidth;
+                baseValueRight += scaledAdditionalButtonWidth;
 
                 Button button = new Button();
                 button.Text = "编辑...";
-                button.Location = new Point(container.Width - baseAdditionalButtonRight - additionalButtonWidth, baseHeight - 3);
+                button.Location = new Point(
+                    container.ClientSize.Width - baseAdditionalButtonRight - scaledAdditionalButtonWidth,
+                    baseHeight - DpiHelper.ScaleValue(3, currentDpi));
                 button.FlatStyle = FlatStyle.System;
-                button.Size = new Size(additionalButtonWidth, 28);
+                button.Size = new Size(scaledAdditionalButtonWidth, additionalButtonHeight);
                 button.Click += (object _s, EventArgs _e) =>
                 {
                     var dialog = new FormStringArrayEditor();
@@ -361,21 +366,28 @@ namespace tbm_launcher
                 additionalButton = button;
             }
             valueControl.Location = new Point(baseValueLeft, baseHeight + baseValueHeightOffset);
-            valueControl.Size = new Size(container.Width - baseValueLeft - baseValueRight, 22);
+            valueControl.Size = new Size(
+                container.ClientSize.Width - baseValueLeft - baseValueRight,
+                DpiHelper.ScaleValue(22, currentDpi));
             // add special buttons for certain ConfigTypes
             if (settingItem.ConfigType == CONFIG_TYPE_FILE ||
                 settingItem.ConfigType == CONFIG_TYPE_DIRECTORY)
             {
                 int additionalButtonWidth = 50;
+                int scaledAdditionalButtonWidth = DpiHelper.ScaleValue(additionalButtonWidth, currentDpi);
+                int additionalButtonHeight = DpiHelper.ScaleValue(28, currentDpi);
                 int baseAdditionalButtonRight = baseValueRight;
                 
-                valueControl.Size = new Size(container.Width - baseValueLeft - baseValueRight - additionalButtonWidth, 22);
-                baseValueRight = container.Width - additionalButtonWidth;
+                valueControl.Size = new Size(
+                    container.ClientSize.Width - baseValueLeft - baseValueRight - scaledAdditionalButtonWidth,
+                    DpiHelper.ScaleValue(22, currentDpi));
                 Button button = new Button();
                 button.Text = "浏览...";
-                button.Location = new Point(container.Width - baseAdditionalButtonRight - 50, baseHeight - 3);
+                button.Location = new Point(
+                    container.ClientSize.Width - baseAdditionalButtonRight - scaledAdditionalButtonWidth,
+                    baseHeight - DpiHelper.ScaleValue(3, currentDpi));
                 button.FlatStyle = FlatStyle.System;
-                button.Size = new Size(additionalButtonWidth, 28);
+                button.Size = new Size(scaledAdditionalButtonWidth, additionalButtonHeight);
                 button.FlatStyle = FlatStyle.System;
                 if (settingItem.ConfigType == CONFIG_TYPE_FILE)
                 {

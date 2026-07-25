@@ -245,6 +245,20 @@ namespace tbm_launcher
 
     public class ServiceItemControlGroup
     {
+        private const int DesignRowHeight = 30;
+        private const int DesignTextOffset = 3;
+        private const int DesignNameLeft = 0;
+        private const int DesignNameWidth = 195;
+        private const int DesignStatusLeft = 200;
+        private const int DesignStatusWidth = 100;
+        private const int DesignPortLeft = 300;
+        private const int DesignPortWidth = 50;
+        private const int DesignInstallLeft = 260;
+        private const int DesignLaunchLeft = 360;
+        private const int DesignChangePortLeft = 420;
+        private const int DesignButtonWidth = 75;
+        private const int DesignButtonHeight = 23;
+
         public class RunningStatus
         {
             public const int RETERVING_RUNNING_STATUS = 0;
@@ -263,6 +277,7 @@ namespace tbm_launcher
         private Button Ctrl_ChangePort;
         private Button Ctrl_InstallRequirement;
         private Panel Ctrl_ParentControl;
+        private readonly int controlIndex;
         public LaunchInfoData Data = new LaunchInfoData();
         private int status;
         private bool manual_terminate;
@@ -270,41 +285,26 @@ namespace tbm_launcher
         public ServiceItemControlGroup(LaunchInfoData data, int ctrl_index, Panel container)
         {
             Ctrl_ParentControl = container;
+            controlIndex = ctrl_index;
             Data = data ?? new LaunchInfoData();
-
-            const int height = 30;
-            const int text_offset = 3;
 
             Ctrl_Name = new Label();
             Ctrl_Name.FlatStyle = FlatStyle.System;
             Name = Data.ToString();
-            Ctrl_Name.Location = new Point(0, height * ctrl_index + text_offset);
-            Ctrl_Name.Width = 195;
             container.Controls.Add(Ctrl_Name);
 
             Ctrl_Status = new Label();
             Ctrl_Status.FlatStyle = FlatStyle.System;
             Ctrl_Status.Text = "获取运行信息...";
             Ctrl_Status.ForeColor = Color.Gray;
-            Ctrl_Status.Location = new Point(200, height * ctrl_index + text_offset);
             if (Data.StatusCheckMethod != StatusCheckMethodEnum.NO_CHECK)
             {
                 container.Controls.Add(Ctrl_Status);
-            }
-            else
-            {
-                Ctrl_Name.Width += 100;
-                if (Port == 0)
-                {
-                    Ctrl_Name.Width += 50;
-                }
             }
 
             Ctrl_Port = new Label();
             Ctrl_Port.FlatStyle = FlatStyle.System;
             Port = Data.PortNumber;
-            Ctrl_Port.Location = new Point(300, height * ctrl_index + text_offset);
-            Ctrl_Port.Width = 50;
             Ctrl_Port.Click += (object s, EventArgs e) =>
             {
                 if (Status == RunningStatus.RUNNING)
@@ -333,7 +333,6 @@ namespace tbm_launcher
 
             Ctrl_Launch = new Button();
             Ctrl_Launch.Text = "启动";
-            Ctrl_Launch.Location = new Point(360, height * ctrl_index);
             Ctrl_Launch.FlatStyle = FlatStyle.System;
             Ctrl_Launch.Enabled = false;
             Ctrl_Launch.Click += (object sender, EventArgs e) =>
@@ -351,17 +350,16 @@ namespace tbm_launcher
 
             Ctrl_ChangePort = new Button();
             Ctrl_ChangePort.Text = "Change Port";
-            Ctrl_ChangePort.Location = new Point(420, height * ctrl_index);
             Ctrl_ChangePort.Visible = false;
             Ctrl_ChangePort.FlatStyle = FlatStyle.System;
 
             Ctrl_InstallRequirement = new Button();
             Ctrl_InstallRequirement.Text = "安装依赖";
             Ctrl_InstallRequirement.Visible = false;
-            Ctrl_InstallRequirement.Location = new Point(260, height * ctrl_index);
             Ctrl_InstallRequirement.FlatStyle = FlatStyle.System;
             container.Controls.Add(Ctrl_InstallRequirement);
 
+            ApplyDpi(DpiHelper.GetDpiForControl(container));
             RetriveRunningInformation();
         }
 
@@ -390,7 +388,11 @@ namespace tbm_launcher
                 Data.Name = value;
                 if (Ctrl_Name != null)
                 {
-                    InvokeIfRequired(() => { Ctrl_Name.Text = Data.ToString(); });
+                    InvokeIfRequired(() =>
+                    {
+                        Ctrl_Name.Text = Data.ToString();
+                        ApplyDpi(DpiHelper.GetDpiForControl(Ctrl_ParentControl));
+                    });
                 }
             }
         }
@@ -403,9 +405,86 @@ namespace tbm_launcher
                 Data.PortNumber = value;
                 if (Ctrl_Port != null)
                 {
-                    InvokeIfRequired(() => { Ctrl_Port.Text = value.ToString(); });
+                    InvokeIfRequired(() =>
+                    {
+                        Ctrl_Port.Text = value.ToString();
+                        ApplyDpi(DpiHelper.GetDpiForControl(Ctrl_ParentControl));
+                    });
                 }
             }
+        }
+
+        public void ApplyDpi(int dpi)
+        {
+            if (Ctrl_ParentControl == null || Ctrl_ParentControl.IsDisposed)
+            {
+                return;
+            }
+
+            int effectiveDpi = dpi > 0 ? dpi : DpiHelper.DefaultDpi;
+            int rowTop = DpiHelper.ScaleValue(DesignRowHeight * controlIndex, effectiveDpi);
+            int rowHeight = DpiHelper.ScaleValue(DesignRowHeight, effectiveDpi);
+            int textTop = rowTop + DpiHelper.ScaleValue(DesignTextOffset, effectiveDpi);
+            int nameWidth = DpiHelper.ScaleValue(DesignNameWidth, effectiveDpi);
+            if (Data.StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK)
+            {
+                nameWidth += DpiHelper.ScaleValue(DesignStatusWidth, effectiveDpi);
+                if (Port == 0)
+                {
+                    nameWidth += DpiHelper.ScaleValue(DesignPortWidth, effectiveDpi);
+                }
+            }
+
+            int labelHeight = Math.Max(DpiHelper.ScaleValue(22, effectiveDpi), Ctrl_ParentControl.Font.Height + DpiHelper.ScaleValue(6, effectiveDpi));
+            Size buttonSize = new Size(
+                DpiHelper.ScaleValue(DesignButtonWidth, effectiveDpi),
+                DpiHelper.ScaleValue(DesignButtonHeight, effectiveDpi));
+
+            if (Ctrl_Name != null)
+            {
+                Ctrl_Name.Location = new Point(DpiHelper.ScaleValue(DesignNameLeft, effectiveDpi), textTop);
+                Ctrl_Name.Size = new Size(nameWidth, labelHeight);
+                Ctrl_Name.Font = Ctrl_ParentControl.Font;
+                Ctrl_Name.Height = Math.Max(Ctrl_Name.Height, rowHeight);
+            }
+            
+            if (Ctrl_Status != null)
+            {
+                Ctrl_Status.Location = new Point(DpiHelper.ScaleValue(DesignStatusLeft, effectiveDpi), textTop);
+                Ctrl_Status.Size = new Size(DpiHelper.ScaleValue(DesignStatusWidth, effectiveDpi), labelHeight);
+                Ctrl_Status.Font = Ctrl_ParentControl.Font;
+            }
+
+            if (Ctrl_Port != null)
+            {
+                Ctrl_Port.Location = new Point(DpiHelper.ScaleValue(DesignPortLeft, effectiveDpi), textTop);
+                Ctrl_Port.Size = new Size(DpiHelper.ScaleValue(DesignPortWidth, effectiveDpi), labelHeight);
+                Ctrl_Port.Font = Status == RunningStatus.RUNNING
+                ? new Font(Ctrl_ParentControl.Font, FontStyle.Underline)
+                : Ctrl_ParentControl.Font;
+            }
+           
+            if (Ctrl_Launch != null)
+            {
+                Ctrl_Launch.Location = new Point(DpiHelper.ScaleValue(DesignLaunchLeft, effectiveDpi), rowTop);
+                Ctrl_Launch.Size = buttonSize;
+                Ctrl_Launch.Font = Ctrl_ParentControl.Font;
+            }
+            
+            if (Ctrl_ChangePort != null)
+            {
+                Ctrl_ChangePort.Location = new Point(DpiHelper.ScaleValue(DesignChangePortLeft, effectiveDpi), rowTop);
+                Ctrl_ChangePort.Size = buttonSize;
+                Ctrl_ChangePort.Font = Ctrl_ParentControl.Font;
+            }
+            
+            if (Ctrl_InstallRequirement != null)
+            {
+                Ctrl_InstallRequirement.Location = new Point(DpiHelper.ScaleValue(DesignInstallLeft, effectiveDpi), rowTop);
+                Ctrl_InstallRequirement.Size = buttonSize;
+                Ctrl_InstallRequirement.Font = Ctrl_ParentControl.Font;
+            }
+
         }
 
         private int Status

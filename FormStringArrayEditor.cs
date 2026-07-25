@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace tbm_launcher
 {
-    public class FormStringArrayEditor : Form
+    public class FormStringArrayEditor : DpiAwareForm
     {
         private readonly CusomizedListBox listItems;
         private readonly Button buttonAdd;
@@ -27,6 +27,7 @@ namespace tbm_launcher
             buttonCancel = new Button();
 
             InitializeComponent();
+            InitializeDpiAwareness();
         }
 
         public void SetItems(IEnumerable<string> items)
@@ -192,6 +193,12 @@ namespace tbm_launcher
             listItems.Items[selectedIndex] = listItems.Items[selectedIndex + 1];
             listItems.Items[selectedIndex + 1] = temp;
             listItems.SelectedIndex = selectedIndex + 1;
+        }
+
+        protected override void OnAfterDpiChanged(int oldDpi, int newDpi)
+        {
+            base.OnAfterDpiChanged(oldDpi, newDpi);
+            listItems.ApplyDpiScaling(newDpi);
         }
     }
 }

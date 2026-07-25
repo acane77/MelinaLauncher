@@ -14,6 +14,7 @@ namespace tbm_launcher
         [STAThread]
         static void Main(string[] args)
         {
+            DpiHelper.InitializeProcessDpiAwareness();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             foreach (string arg in args)

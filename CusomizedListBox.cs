@@ -98,10 +98,14 @@ namespace tbm_launcher
 
     internal class CusomizedListBox : ListBox
     {
+        private const int DefaultDesignItemHeight = 24;
         public object mouseItem;
         private CusomizedListBoxItemCollection m_Items;
         private readonly TextBox inlineEditor;
         private int editingIndex = -1;
+        private int currentDpi = DpiHelper.DefaultDpi;
+        private int designItemHeight = DefaultDesignItemHeight;
+        private bool designItemHeightCaptured;
 
         public Color _MoveItemBackColor = Color.FromArgb(255, 229, 243, 255);
         public Color _SelectedItemBackColor = Color.FromArgb(255, 204, 232, 255);
@@ -142,6 +146,24 @@ namespace tbm_launcher
         private bool CanSafelyUseHandle()
         {
             return !IsDisposed && !Disposing && IsHandleCreated;
+        }
+
+        private int ResolveCurrentDpi()
+        {
+            return currentDpi > 0 ? currentDpi : DpiHelper.GetDpiForControl(this);
+        }
+
+        public void ApplyDpiScaling(int dpi)
+        {
+            currentDpi = dpi > 0 ? dpi : DpiHelper.DefaultDpi;
+            if (!designItemHeightCaptured)
+            {
+                designItemHeight = Math.Max(1, base.ItemHeight);
+                designItemHeightCaptured = true;
+            }
+            base.ItemHeight = DpiHelper.ScaleValue(designItemHeight, currentDpi);
+            inlineEditor.Font = Font;
+            Invalidate();
         }
 
         private bool TryGetItemBounds(int index, out Rectangle bounds)
@@ -191,7 +213,13 @@ namespace tbm_launcher
                 {
                     continue;
                 }
-                Rectangle deleteBounds = new Rectangle(bounds.Width - 28, (bounds.Height - 16) / 2 + bounds.Top, 16, 16);
+                int deleteBoundsSize = DpiHelper.ScaleValue(16, ResolveCurrentDpi());
+                int deleteBoundsOffset = DpiHelper.ScaleValue(28, ResolveCurrentDpi());
+                Rectangle deleteBounds = new Rectangle(
+                    bounds.Width - deleteBoundsOffset,
+                    (bounds.Height - deleteBoundsSize) / 2 + bounds.Top,
+                    deleteBoundsSize,
+                    deleteBoundsSize);
 
                 if (bounds.Contains(e.X, e.Y))
                 {
@@ -275,11 +303,15 @@ namespace tbm_launcher
                     }
                 }
 
-                int fontLeft = bounds.Left + 60 - 57;
-                System.Drawing.Font font = new System.Drawing.Font("微软雅黑", 9);
-                // System.Drawing.Font fontDesc = new System.Drawing.Font("微软雅黑", 9);
-
-                g.DrawString(Items[i].ToString(), font, new SolidBrush(this.ForeColor), fontLeft, bounds.Top + 3);
+                int textLeft = bounds.Left + DpiHelper.ScaleValue(3, ResolveCurrentDpi());
+                int textTop = bounds.Top + DpiHelper.ScaleValue(6 * ResolveCurrentDpi() / DpiHelper.DefaultDpi, ResolveCurrentDpi());
+                TextRenderer.DrawText(
+                    g,
+                    Items[i].ToString(),
+                    Font,
+                    new Point(textLeft, textTop),
+                    ForeColor,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
 
                 //if (Items[i].Icon != null)
                 //{
@@ -295,7 +327,28 @@ namespace tbm_launcher
 
         protected override void OnMeasureItem(MeasureItemEventArgs e)
         {
+            e.ItemHeight = DpiHelper.ScaleValue(designItemHeight, ResolveCurrentDpi());
             base.OnMeasureItem(e);
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            ApplyDpiScaling(DpiHelper.GetDpiForControl(this));
+        }
+
+        protected override void OnParentChanged(EventArgs e)
+        {
+            base.OnParentChanged(e);
+            inlineEditor.Font = Font;
+            ApplyDpiScaling(DpiHelper.GetDpiForControl(this));
+        }
+
+        protected override void OnFontChanged(EventArgs e)
+        {
+            base.OnFontChanged(e);
+            inlineEditor.Font = Font;
+            Invalidate();
         }
 
         protected override void OnMouseClick(MouseEventArgs e)
@@ -358,7 +411,14 @@ namespace tbm_launcher
             {
                 return;
             }
-            inlineEditor.Bounds = new Rectangle(bounds.Left + 1, bounds.Top + 1, Math.Max(20, bounds.Width - 2), Math.Max(20, bounds.Height - 2));
+            int borderInset = DpiHelper.ScaleValue(5, ResolveCurrentDpi());
+            int borderInsetTop = DpiHelper.ScaleValue(4, ResolveCurrentDpi());
+            int minimumEditorSize = DpiHelper.ScaleValue(27, ResolveCurrentDpi());
+            inlineEditor.Bounds = new Rectangle(
+                bounds.Left + borderInset,
+                bounds.Top + borderInsetTop,
+                Math.Max(minimumEditorSize, bounds.Width - borderInset * 2),
+                Math.Max(minimumEditorSize, bounds.Height - borderInsetTop * 2));
             inlineEditor.Text = item.ToString();
             inlineEditor.Visible = true;
             inlineEditor.BringToFront();
