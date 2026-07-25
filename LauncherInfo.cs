@@ -357,6 +357,14 @@ namespace tbm_launcher
         public bool RunBackground { get { return Data.RunBackground; } }
         public string WorkingDirectory { get { return Data.WorkingDirectory; } }
         public string ExecutableName { get { return Data.ExecutableName; } }
+        public bool HasLaunchCommand { get { return !string.IsNullOrWhiteSpace(Command); } }
+        public bool ShouldParticipateInBatchOperations
+        {
+            get
+            {
+                return HasLaunchCommand && StatusCheckMethod != StatusCheckMethodEnum.NO_CHECK;
+            }
+        }
 
         public string Name
         {
@@ -397,7 +405,14 @@ namespace tbm_launcher
                         if (status == RunningStatus.RETERVING_RUNNING_STATUS)
                         {
                             Ctrl_Status.Text = "获取运行信息...";
-                            Ctrl_Launch.Show();
+                            if (HasLaunchCommand)
+                            {
+                                Ctrl_Launch.Show();
+                            }
+                            else
+                            {
+                                Ctrl_Launch.Hide();
+                            }
                             Ctrl_Status.ForeColor = Color.Gray;
                             Ctrl_Launch.Enabled = false;
                             Ctrl_Launch.Text = StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK ? "打开" : "启动";
@@ -421,8 +436,16 @@ namespace tbm_launcher
                         {
                             Ctrl_Status.Text = "缺少依赖";
                             Ctrl_Status.ForeColor = Color.Red;
-                            Ctrl_Launch.Hide();
-                            Ctrl_InstallRequirement.Show();
+                            if (HasLaunchCommand)
+                            {
+                                Ctrl_Launch.Hide();
+                                Ctrl_InstallRequirement.Show();
+                            }
+                            else
+                            {
+                                Ctrl_Launch.Hide();
+                                Ctrl_InstallRequirement.Hide();
+                            }
                         }
                         else if (status == RunningStatus.PROCESSING)
                         {
@@ -441,8 +464,21 @@ namespace tbm_launcher
                         {
                             Ctrl_Status.Text = "配置文件错误";
                             Ctrl_Status.ForeColor = Color.Red;
+                            if (HasLaunchCommand)
+                            {
+                                Ctrl_Launch.Hide();
+                                Ctrl_InstallRequirement.Show();
+                            }
+                            else
+                            {
+                                Ctrl_Launch.Hide();
+                                Ctrl_InstallRequirement.Hide();
+                            }
+                        }
+
+                        if (!HasLaunchCommand)
+                        {
                             Ctrl_Launch.Hide();
-                            Ctrl_InstallRequirement.Show();
                         }
 
                         if (Ctrl_Port != null)

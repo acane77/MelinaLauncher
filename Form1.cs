@@ -39,7 +39,10 @@ namespace tbm_launcher
             btn_launch.Enabled = false;
             foreach (ServiceItemControlGroup serviceItem in LI)
             {
-                serviceItem.StartService();
+                if (serviceItem.ShouldParticipateInBatchOperations)
+                {
+                    serviceItem.StartService();
+                }
             }
             btn_launch.Enabled = true;
         }
@@ -49,7 +52,10 @@ namespace tbm_launcher
             btn_stop.Enabled = false;
             foreach (ServiceItemControlGroup serviceItem in LI)
             {
-                serviceItem.StopService();
+                if (serviceItem.ShouldParticipateInBatchOperations)
+                {
+                    serviceItem.StopService();
+                }
             }
             btn_stop.Enabled = true;
         }
