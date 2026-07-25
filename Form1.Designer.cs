@@ -43,25 +43,25 @@
             // 
             this.label1.AutoSize = true;
             this.label1.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.label1.Font = new System.Drawing.Font("微软雅黑", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label1.Location = new System.Drawing.Point(21, 20);
+            this.label1.Font = new System.Drawing.Font("Microsoft YaHei", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label1.Location = new System.Drawing.Point(113, 452);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(322, 50);
+            this.label1.Size = new System.Drawing.Size(166, 25);
             this.label1.TabIndex = 0;
             this.label1.Text = "Melina Launcher";
             // 
             // panel1
             // 
             this.panel1.AutoScroll = true;
-            this.panel1.Location = new System.Drawing.Point(26, 73);
+            this.panel1.Location = new System.Drawing.Point(26, 13);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(461, 299);
+            this.panel1.Size = new System.Drawing.Size(461, 381);
             this.panel1.TabIndex = 4;
             // 
             // btn_stop
             // 
             this.btn_stop.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.btn_stop.Location = new System.Drawing.Point(357, 398);
+            this.btn_stop.Location = new System.Drawing.Point(332, 404);
             this.btn_stop.Name = "btn_stop";
             this.btn_stop.Size = new System.Drawing.Size(121, 31);
             this.btn_stop.TabIndex = 5;
@@ -72,7 +72,7 @@
             // btn_launch
             // 
             this.btn_launch.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.btn_launch.Location = new System.Drawing.Point(207, 398);
+            this.btn_launch.Location = new System.Drawing.Point(182, 404);
             this.btn_launch.Name = "btn_launch";
             this.btn_launch.Size = new System.Drawing.Size(144, 31);
             this.btn_launch.TabIndex = 0;
@@ -83,7 +83,7 @@
             // button1
             // 
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.button1.Location = new System.Drawing.Point(12, 398);
+            this.button1.Location = new System.Drawing.Point(8, 404);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(95, 31);
             this.button1.TabIndex = 7;
@@ -98,13 +98,14 @@
             // 
             // buttonConfig
             // 
+            this.buttonConfig.BackgroundImage = global::tbm_launcher.Properties.Resources.Settings_16x;
+            this.buttonConfig.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.buttonConfig.FlatAppearance.BorderSize = 0;
             this.buttonConfig.FlatAppearance.MouseDownBackColor = System.Drawing.Color.Silver;
             this.buttonConfig.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonConfig.Image = global::tbm_launcher.Properties.Resources.Settings_16x;
-            this.buttonConfig.Location = new System.Drawing.Point(457, 3);
+            this.buttonConfig.Location = new System.Drawing.Point(462, 411);
             this.buttonConfig.Name = "buttonConfig";
-            this.buttonConfig.Size = new System.Drawing.Size(30, 31);
+            this.buttonConfig.Size = new System.Drawing.Size(16, 16);
             this.buttonConfig.TabIndex = 8;
             this.buttonConfig.UseVisualStyleBackColor = true;
             this.buttonConfig.Click += new System.EventHandler(this.button2_Click);
@@ -112,7 +113,7 @@
             // Form1
             // 
             this.AcceptButton = this.btn_launch;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(14F, 31F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(490, 441);
@@ -122,7 +123,7 @@
             this.Controls.Add(this.btn_stop);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.label1);
-            this.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.Font = new System.Drawing.Font("Microsoft YaHei", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
