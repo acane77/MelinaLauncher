@@ -28,6 +28,7 @@ namespace tbm_launcher
 
             InitializeComponent();
             InitializeDpiAwareness();
+            ApplyLocalizedText();
         }
 
         public void SetItems(IEnumerable<string> items)

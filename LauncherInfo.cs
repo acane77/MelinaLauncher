@@ -14,7 +14,7 @@ namespace tbm_launcher
     public class InvalidConfigureValueError : Exception
     {
         public InvalidConfigureValueError()
-            : base("分析配置文件时出现了错误。")
+            : base(AppLocalization.Get("LaunchInfo.AnalysisError"))
         {
         }
 
@@ -67,7 +67,7 @@ namespace tbm_launcher
                 return SectionName;
             }
 
-            return "<Unnamed>";
+            return AppLocalization.Get("LaunchInfo.Unnamed");
         }
 
         public void SetFieldsFromString(string setting_name, string value)
@@ -114,7 +114,7 @@ namespace tbm_launcher
 
                         if (portNumber < 0 || portNumber > 65535)
                         {
-                            throw new InvalidConfigureValueError("端口号取值范围是 0-65535.");
+                            throw new InvalidConfigureValueError(AppLocalization.Get("LaunchInfo.PortRange"));
                         }
 
                         PortNumber = portNumber;
@@ -134,11 +134,12 @@ namespace tbm_launcher
                         && value != StatusCheckMethodEnum.NO_CHECK)
                     {
                         throw new InvalidConfigureValueError(
-                            "配置项：错误的启动状态检查方式：" + value +
-                            ", 可选的值有：" +
-                            StatusCheckMethodEnum.CHECK_PORT_USAGE + "," +
-                            StatusCheckMethodEnum.NO_CHECK + "和" +
-                            StatusCheckMethodEnum.CHECK_EXECUTABLE_EXISTANCE);
+                            AppLocalization.Format(
+                                "LaunchInfo.InvalidStatusCheckMethod",
+                                value,
+                                StatusCheckMethodEnum.CHECK_PORT_USAGE,
+                                StatusCheckMethodEnum.NO_CHECK,
+                                StatusCheckMethodEnum.CHECK_EXECUTABLE_EXISTANCE));
                     }
                     StatusCheckMethod = value;
                     break;
@@ -154,7 +155,7 @@ namespace tbm_launcher
                     ExecutableName = value ?? string.Empty;
                     break;
                 default:
-                    throw new InvalidConfigureValueError("没有此配置项：" + setting_name);
+                    throw new InvalidConfigureValueError(AppLocalization.Format("LaunchInfo.NoSuchField", setting_name));
             }
         }
 
@@ -217,7 +218,7 @@ namespace tbm_launcher
                     ExecutableName = value ?? string.Empty;
                     break;
                 default:
-                    throw new InvalidConfigureValueError("没有此配置项：" + setting_name);
+                    throw new InvalidConfigureValueError(AppLocalization.Format("LaunchInfo.NoSuchField", setting_name));
             }
         }
 
@@ -254,7 +255,7 @@ namespace tbm_launcher
                 case "executable_name":
                     return ExecutableName;
             }
-            return "<Error Value>";
+            return AppLocalization.Get("LaunchInfo.ErrorValue");
         }
 
         public static string GetFieldValueString(string n, LaunchInfoData _this)
@@ -332,7 +333,7 @@ namespace tbm_launcher
 
             Ctrl_Status = new Label();
             Ctrl_Status.FlatStyle = FlatStyle.System;
-            Ctrl_Status.Text = "获取运行信息...";
+            Ctrl_Status.Text = AppLocalization.Get("Service.StatusRetrieving");
             Ctrl_Status.ForeColor = Color.Gray;
             if (Data.StatusCheckMethod != StatusCheckMethodEnum.NO_CHECK)
             {
@@ -369,7 +370,7 @@ namespace tbm_launcher
             }
 
             Ctrl_Launch = new Button();
-            Ctrl_Launch.Text = "启动";
+            Ctrl_Launch.Text = AppLocalization.Get("Service.ButtonStart");
             Ctrl_Launch.FlatStyle = FlatStyle.System;
             Ctrl_Launch.Enabled = false;
             Ctrl_Launch.Click += (object sender, EventArgs e) =>
@@ -386,12 +387,12 @@ namespace tbm_launcher
             container.Controls.Add(Ctrl_Launch);
 
             Ctrl_ChangePort = new Button();
-            Ctrl_ChangePort.Text = "Change Port";
+            Ctrl_ChangePort.Text = AppLocalization.Get("Service.ButtonChangePort");
             Ctrl_ChangePort.Visible = false;
             Ctrl_ChangePort.FlatStyle = FlatStyle.System;
 
             Ctrl_InstallRequirement = new Button();
-            Ctrl_InstallRequirement.Text = "安装依赖";
+            Ctrl_InstallRequirement.Text = AppLocalization.Get("Service.ButtonInstallDependencies");
             Ctrl_InstallRequirement.Visible = false;
             Ctrl_InstallRequirement.FlatStyle = FlatStyle.System;
             container.Controls.Add(Ctrl_InstallRequirement);
@@ -541,7 +542,7 @@ namespace tbm_launcher
                     {
                         if (status == RunningStatus.RETERVING_RUNNING_STATUS)
                         {
-                            Ctrl_Status.Text = "获取运行信息...";
+                            Ctrl_Status.Text = AppLocalization.Get("Service.StatusRetrieving");
                             if (HasLaunchCommand)
                             {
                                 Ctrl_Launch.Show();
@@ -552,26 +553,30 @@ namespace tbm_launcher
                             }
                             Ctrl_Status.ForeColor = Color.Gray;
                             Ctrl_Launch.Enabled = false;
-                            Ctrl_Launch.Text = StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK ? "打开" : "启动";
+                            Ctrl_Launch.Text = StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK
+                                ? AppLocalization.Get("Service.ButtonOpen")
+                                : AppLocalization.Get("Service.ButtonStart");
                         }
                         else if (status == RunningStatus.RUNNING)
                         {
-                            Ctrl_Status.Text = "正在运行";
+                            Ctrl_Status.Text = AppLocalization.Get("Service.StatusRunning");
                             Ctrl_Status.ForeColor = Color.Green;
                             Ctrl_Launch.Enabled = true;
-                            Ctrl_Launch.Text = "停止";
+                            Ctrl_Launch.Text = AppLocalization.Get("Service.ButtonStop");
                         }
                         else if (status == RunningStatus.STOPPED)
                         {
-                            Ctrl_Status.Text = "已停止";
+                            Ctrl_Status.Text = AppLocalization.Get("Service.StatusStopped");
                             Ctrl_Status.ForeColor = Color.Gray;
                             Ctrl_Launch.Enabled = true;
-                            Ctrl_Launch.Text = StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK ? "打开" : "启动";
+                            Ctrl_Launch.Text = StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK
+                                ? AppLocalization.Get("Service.ButtonOpen")
+                                : AppLocalization.Get("Service.ButtonStart");
                             Ctrl_InstallRequirement.Hide();
                         }
                         else if (status == RunningStatus.LACK_OF_DEPENDENCIES)
                         {
-                            Ctrl_Status.Text = "缺少依赖";
+                            Ctrl_Status.Text = AppLocalization.Get("Service.StatusMissingDependencies");
                             Ctrl_Status.ForeColor = Color.Red;
                             if (HasLaunchCommand)
                             {
@@ -586,20 +591,22 @@ namespace tbm_launcher
                         }
                         else if (status == RunningStatus.PROCESSING)
                         {
-                            Ctrl_Status.Text = "正在处理";
+                            Ctrl_Status.Text = AppLocalization.Get("Service.StatusProcessing");
                             Ctrl_Status.ForeColor = Color.Black;
                             Ctrl_InstallRequirement.Hide();
                             Ctrl_Launch.Enabled = false;
                         }
                         else if (status == RunningStatus.FAILED)
                         {
-                            Ctrl_Status.Text = "运行失败";
-                            Ctrl_Launch.Text = StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK ? "打开" : "启动";
+                            Ctrl_Status.Text = AppLocalization.Get("Service.StatusFailed");
+                            Ctrl_Launch.Text = StatusCheckMethod == StatusCheckMethodEnum.NO_CHECK
+                                ? AppLocalization.Get("Service.ButtonOpen")
+                                : AppLocalization.Get("Service.ButtonStart");
                             Ctrl_Status.ForeColor = Color.Red;
                         }
                         else if (status == RunningStatus.CONFIG_ERROR)
                         {
-                            Ctrl_Status.Text = "配置文件错误";
+                            Ctrl_Status.Text = AppLocalization.Get("Service.StatusConfigError");
                             Ctrl_Status.ForeColor = Color.Red;
                             if (HasLaunchCommand)
                             {
@@ -668,7 +675,7 @@ namespace tbm_launcher
                 }
                 else
                 {
-                    Name = "InvalidStatusCheck [" + StatusCheckMethod + "]";
+                    Name = AppLocalization.Format("Service.InvalidStatusCheckFormat", StatusCheckMethod);
                     Status = RunningStatus.CONFIG_ERROR;
                     return;
                 }
@@ -718,8 +725,8 @@ namespace tbm_launcher
                         {
                             MessageBox.Show(
                                 Ctrl_ParentControl.Parent,
-                                "执行该操作指定的命令时发生了错误。\r\n\r\nreturn code: " + retCode,
-                                "Error",
+                                AppLocalization.Format("Service.ErrorCommandFailed", retCode),
+                                AppLocalization.Get("Common.ErrorTitle"),
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
                         });
@@ -859,8 +866,8 @@ namespace tbm_launcher
                     {
                         MessageBox.Show(
                             Ctrl_ParentControl.Parent,
-                            "执行端口点击操作时发生了错误。\r\n\r\n" + ex.Message,
-                            "Error",
+                            AppLocalization.Format("Service.ErrorPortClickFailed", ex.Message),
+                            AppLocalization.Get("Common.ErrorTitle"),
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
                     });
@@ -961,8 +968,8 @@ namespace tbm_launcher
                             {
                                 MessageBox.Show(
                                     Ctrl_ParentControl.Parent,
-                                    "执行该操作的时候发生了错误。\r\n可能是因为\r\n   (1)该程序已经停止运行\r\n   (2)该程序的启动命令并不包含实际执行的应用的名称\r\n\r\nreturn code: " + process.ExitCode + "\r\nidentifier: " + identifier,
-                                    "Error",
+                                    AppLocalization.Format("Service.ErrorStopFailed", process.ExitCode, identifier),
+                                    AppLocalization.Get("Common.ErrorTitle"),
                                     MessageBoxButtons.OK,
                                     MessageBoxIcon.Error);
                             });

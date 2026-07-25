@@ -150,7 +150,11 @@ namespace tbm_launcher
             int currentDpi = DpiHelper.GetDpiForControl(container);
             int baseHeight = DpiHelper.ScaleValue(25, currentDpi) + index * DpiHelper.ScaleValue(30, currentDpi);
             int baseTitleLeft = DpiHelper.ScaleValue(20, currentDpi);
-            int baseValueLeft = DpiHelper.ScaleValue(120, currentDpi);
+            int designLabelWidth = DpiHelper.ScaleValue(100, currentDpi);
+            int effectiveLabelWidth = AppLocalization.CurrentLanguageCode == AppLanguageCodes.English
+                ? DpiHelper.ScaleValue(150, currentDpi)
+                : designLabelWidth;
+            int baseValueLeft = baseTitleLeft + effectiveLabelWidth;
             int baseValueRight = DpiHelper.ScaleValue(20, currentDpi);
             int baseValueHeightOffset = 0;
             MetaInformation<ValueType> settingItem = this;
@@ -158,7 +162,7 @@ namespace tbm_launcher
             labelConfigName.Text = settingItem.FriendlyConfigName;
             labelConfigName.FlatStyle = FlatStyle.System;
             labelConfigName.Location = new Point(baseTitleLeft, baseHeight + DpiHelper.ScaleValue(3, currentDpi));
-            labelConfigName.Size = new Size(baseValueLeft - baseTitleLeft, DpiHelper.ScaleValue(22, currentDpi));
+            labelConfigName.Size = new Size(effectiveLabelWidth, DpiHelper.ScaleValue(22, currentDpi));
             BindReferenceCopy(labelConfigName, info);
             container.Controls.Add(labelConfigName);
 
@@ -171,39 +175,54 @@ namespace tbm_launcher
                 if (settingItem.ListItems != null)
                 {
                     ComboBox comboBox = new ComboBox();
-                    bool isUpdatingComboText = false;
                     baseValueHeightOffset = -DpiHelper.ScaleValue(1, currentDpi);
+                    int selectedIndex = -1;
+                    int currentIndex = 0;
                     foreach (ListItem item in settingItem.ListItems)
+                    {
                         comboBox.Items.Add(item.Name ?? item.Value);
+                        if (string.Equals(item.Value, value, StringComparison.Ordinal))
+                        {
+                            selectedIndex = currentIndex;
+                        }
+                        currentIndex++;
+                    }
                     valueControl = comboBox;
                     comboBox.SelectedIndexChanged += (object s, EventArgs ev) => {
-                        if (isUpdatingComboText)
-                            return;
                         ComboBox cb = s as ComboBox;
                         int selected_index = cb.SelectedIndex;
                         if (selected_index < 0)
                             return;
-                        string text = settingItem.ListItems[selected_index].Value;
-                        isUpdatingComboText = true;
-                        try
+                        settingItem.SetValueHandler(info, settingItem.ListItems[selected_index].Value);
+                    };
+                    comboBox.TextChanged += (object s, EventArgs ev) =>
+                    {
+                        ComboBox cb = s as ComboBox;
+                        if (cb.DropDownStyle == ComboBoxStyle.DropDown && cb.SelectedIndex < 0)
                         {
-                            cb.Text = text;
-                        }
-                        finally
-                        {
-                            isUpdatingComboText = false;
+                            settingItem.SetValueHandler(info, cb.Text);
                         }
                     };
+                    if (selectedIndex >= 0)
+                    {
+                        comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+                        comboBox.SelectedIndex = selectedIndex;
+                    }
+                    else
+                    {
+                        comboBox.DropDownStyle = ComboBoxStyle.DropDown;
+                        comboBox.Text = value;
+                    }
                 }
                 else
                 {
                     TextBox valueCtrl = new TextBox();
                     valueControl = valueCtrl;
+                    valueControl.TextChanged += (object s_, EventArgs e_) => {
+                        settingItem.SetValueHandler(info, (s_ as Control).Text);
+                    };
+                    valueControl.Text = value;
                 }
-                valueControl.TextChanged += (object s_, EventArgs e_) => {
-                    settingItem.SetValueHandler(info, (s_ as Control).Text);
-                };
-                valueControl.Text = value;
             }
             else if (settingItem.ConfigType == CONFIG_TYPE_INT
                 || settingItem.ConfigType == CONFIG_TYPE_DECIMAL)
@@ -243,7 +262,6 @@ namespace tbm_launcher
             else if (settingItem.ConfigType == CONFIG_TYPE_LIST)
             {
                 ComboBox dropDownList = new ComboBox();
-                bool isUpdatingDropDownText = false;
                 valueControl = dropDownList;
                 if (settingItem.ListItems != null)
                 {
@@ -257,33 +275,17 @@ namespace tbm_launcher
                         _currentIndex++;
                     }
                     dropDownList.SelectedIndexChanged += (object sender_, EventArgs e_) => {
-                        if (isUpdatingDropDownText)
-                            return;
                         ComboBox combo = sender_ as ComboBox;
                         if (combo.SelectedIndex >= 0)
                         {
                             string selectedValue = settingItem.ListItems[combo.SelectedIndex].Value;
-                            if (combo.Text != selectedValue)
-                            {
-                                isUpdatingDropDownText = true;
-                                try
-                                {
-                                    combo.Text = selectedValue;
-                                }
-                                finally
-                                {
-                                    isUpdatingDropDownText = false;
-                                }
-                            }
                             settingItem.SetValueHandler(info, selectedValue);
                         }
                     };
                     dropDownList.TextChanged += (object sender_, EventArgs e_) =>
                     {
-                        if (isUpdatingDropDownText)
-                            return;
                         ComboBox combo = sender_ as ComboBox;
-                        if (combo.SelectedIndex < 0)
+                        if (combo.DropDownStyle == ComboBoxStyle.DropDown && combo.SelectedIndex < 0)
                         {
                             settingItem.SetValueHandler(info, combo.Text);
                         }
@@ -343,7 +345,7 @@ namespace tbm_launcher
                 baseValueRight += scaledAdditionalButtonWidth;
 
                 Button button = new Button();
-                button.Text = "编辑...";
+                button.Text = AppLocalization.Get("Common.Edit");
                 button.Location = new Point(
                     container.ClientSize.Width - baseAdditionalButtonRight - scaledAdditionalButtonWidth,
                     baseHeight - DpiHelper.ScaleValue(3, currentDpi));
@@ -382,7 +384,7 @@ namespace tbm_launcher
                     container.ClientSize.Width - baseValueLeft - baseValueRight - scaledAdditionalButtonWidth,
                     DpiHelper.ScaleValue(22, currentDpi));
                 Button button = new Button();
-                button.Text = "浏览...";
+                button.Text = AppLocalization.Get("Common.Browse");
                 button.Location = new Point(
                     container.ClientSize.Width - baseAdditionalButtonRight - scaledAdditionalButtonWidth,
                     baseHeight - DpiHelper.ScaleValue(3, currentDpi));

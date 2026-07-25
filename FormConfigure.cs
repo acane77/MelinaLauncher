@@ -29,6 +29,8 @@ namespace tbm_launcher
             public string RawHideOneKeyValue;
             public int CheckIntervalSeconds = 10;
             public string RawCheckIntervalValue;
+            public string Language = AppLocalization.DefaultLanguageCode;
+            public string RawLanguageValue;
 
             public string GetFieldValueString(string configName)
             {
@@ -47,6 +49,11 @@ namespace tbm_launcher
                     return RawCheckIntervalValue ?? CheckIntervalSeconds.ToString();
                 }
 
+                if (string.Equals(configName, "language", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RawLanguageValue ?? Language;
+                }
+
                 return string.Empty;
             }
         }
@@ -61,17 +68,20 @@ namespace tbm_launcher
             {
                 if (Kind == ConfigEditorEntryKind.System)
                 {
-                    return "系统配置";
+                    return AppLocalization.Get("Config.SystemEntry");
                 }
 
-                return ServiceConfig == null ? "<Unnamed>" : ServiceConfig.ToString();
+                return ServiceConfig == null ? AppLocalization.Get("LaunchInfo.Unnamed") : ServiceConfig.ToString();
             }
         }
+
+        private bool isLoaded;
 
         public FormConfigure()
         {
             InitializeComponent();
             InitializeDpiAwareness();
+            ApplyLocalizedText();
         }
 
         public List<ServiceItemControlGroup> IniConfigureList = null;
@@ -79,13 +89,16 @@ namespace tbm_launcher
 
         private void FormConfigure_Load(object sender, EventArgs e)
         {
-            InitializeConfigItem();
             LoadRawConfiguration();
+            AppLocalization.SetLanguage(systemConfig.Language);
+            InitializeConfigItem();
+            ApplyLocalizedText();
             textBox1.Visible = false;
             textBox1.TabStop = false;
             label3.Visible = false;
             RenderConfigItemList();
             UpdateWindowTitle();
+            isLoaded = true;
         }
 
         private void FormConfigure_FormClosed(object sender, FormClosedEventArgs e)
@@ -134,13 +147,13 @@ namespace tbm_launcher
             catch (LauncherConfigException ex)
             {
                 string errorText = ex.LineNumber > 0
-                    ? "保存配置失败: Line " + ex.LineNumber + ": " + ex.Message
-                    : "保存配置失败: " + ex.Message;
+                    ? AppLocalization.Format("Config.SaveFailedLine", ex.LineNumber, ex.Message)
+                    : AppLocalization.Format("Config.SaveFailed", ex.Message);
                 MessageBox.Show(errorText);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("保存配置失败: " + ex.Message);
+                MessageBox.Show(AppLocalization.Format("Config.SaveFailed", ex.Message));
             }
         }
 
@@ -156,7 +169,7 @@ namespace tbm_launcher
                 newConfigCount = 0;
             }
 
-            string newConfigName = "新建配置项 (" + newConfigCount + ")";
+            string newConfigName = AppLocalization.Format("Config.NewItemFormat", newConfigCount);
             LaunchInfoData item = new LaunchInfoData();
             item.Name = newConfigName;
             item.SectionName = LauncherConfigFile.CreateRandomSectionName(GetExistingSectionNames());
@@ -177,7 +190,7 @@ namespace tbm_launcher
 
             if (entry.Kind == ConfigEditorEntryKind.System)
             {
-                MessageBox.Show("系统配置项不可删除");
+                MessageBox.Show(AppLocalization.Get("Config.SystemItemCannotDelete"));
                 return;
             }
 
@@ -198,7 +211,7 @@ namespace tbm_launcher
             }
             catch (Exception ex)
             {
-                MessageBox.Show("预览失败: " + ex.Message);
+                MessageBox.Show(AppLocalization.Format("Config.PreviewFailed", ex.Message));
             }
         }
 
@@ -244,7 +257,7 @@ namespace tbm_launcher
             int selectedIndex = listConfig.SelectedIndex;
             LaunchInfoData source = entry.ServiceConfig;
             LaunchInfoData copy = source.Clone();
-            copy.Name = copy.Name + " (Copy)";
+            copy.Name = copy.Name + " (" + AppLocalization.Get("Config.CopySuffix") + ")";
             copy.SectionName = LauncherConfigFile.CreateRandomSectionName(GetExistingSectionNames());
             listConfig.Items.Insert(selectedIndex + 1, CreateServiceEntry(copy));
             listConfig.SelectedIndex = selectedIndex + 1;
@@ -256,7 +269,7 @@ namespace tbm_launcher
             systemSettingConfigs.Add(new MetaInformation<SystemConfigData>
             {
                 ConfigName = "title",
-                FriendlyConfigName = "标题",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.Title"),
                 ConfigType = MetaInformation<SystemConfigData>.CONFIG_TYPE_STRING,
                 GetValueHandler = p => p.Title,
                 SetValueHandler = (p, val) =>
@@ -269,7 +282,7 @@ namespace tbm_launcher
             systemSettingConfigs.Add(new MetaInformation<SystemConfigData>
             {
                 ConfigName = "chk_interval",
-                FriendlyConfigName = "刷新间隔（秒）",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.CheckInterval"),
                 ConfigType = MetaInformation<SystemConfigData>.CONFIG_TYPE_INT,
                 GetValueHandler = p => p.CheckIntervalSeconds.ToString(),
                 SetValueHandler = (p, val) =>
@@ -290,7 +303,7 @@ namespace tbm_launcher
             systemSettingConfigs.Add(new MetaInformation<SystemConfigData>
             {
                 ConfigName = "hide_one_key",
-                FriendlyConfigName = "隐藏一键启动和一键停止",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.HideOneKey"),
                 ConfigType = MetaInformation<SystemConfigData>.CONFIG_TYPE_BOOL,
                 GetValueHandler = p => p.HideOneKey ? "1" : "0",
                 SetValueHandler = (p, val) =>
@@ -301,6 +314,32 @@ namespace tbm_launcher
                 },
                 GetReferenceSectionNameHandler = p => ProgramGlobalConfig.SystemSectionName
             });
+            systemSettingConfigs.Add(new MetaInformation<SystemConfigData>
+            {
+                ConfigName = "language",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.Language"),
+                ConfigType = MetaInformation<SystemConfigData>.CONFIG_TYPE_LIST,
+                ListItems = new List<MetaInformation<SystemConfigData>.ListItem>
+                {
+                    new MetaInformation<SystemConfigData>.ListItem { Name = AppLocalization.Get("Language.English"), Value = AppLanguageCodes.English },
+                    new MetaInformation<SystemConfigData>.ListItem { Name = AppLocalization.Get("Language.SimplifiedChinese"), Value = AppLanguageCodes.SimplifiedChinese },
+                    new MetaInformation<SystemConfigData>.ListItem { Name = AppLocalization.Get("Language.TraditionalChinese"), Value = AppLanguageCodes.TraditionalChinese },
+                    new MetaInformation<SystemConfigData>.ListItem { Name = AppLocalization.Get("Language.Japanese"), Value = AppLanguageCodes.Japanese }
+                },
+                GetValueHandler = p => p.Language,
+                SetValueHandler = (p, val) =>
+                {
+                    string normalizedLanguage;
+                    if (!AppLocalization.TryNormalizeLanguage(val, out normalizedLanguage))
+                    {
+                        return;
+                    }
+
+                    p.RawLanguageValue = val;
+                    p.Language = normalizedLanguage;
+                },
+                GetReferenceSectionNameHandler = p => ProgramGlobalConfig.SystemSectionName
+            });
             
             MetaInformation<SystemConfigData>.ValueFillHandler = (configName, info) => info.GetFieldValueString(configName);
 
@@ -308,7 +347,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "section_name",
-                FriendlyConfigName = "配置标识",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.SectionName"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING,
                 GetValueHandler = p => p.SectionName,
                 SetValueHandler = (p, val) => { p.SectionName = val; },
@@ -318,7 +357,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "name",
-                FriendlyConfigName = "服务名称",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.Name"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING,
                 GetValueHandler = p => p.Name,
                 SetValueHandler = (p, val) => { p.Name = val; listConfig.Invalidate(); },
@@ -328,7 +367,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "command",
-                FriendlyConfigName = "启动命令",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.Command"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_FILE,
                 GetValueHandler = p => p.Command,
                 SetValueHandler = (p, val) => { p.Command = val; },
@@ -338,7 +377,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "stop_command",
-                FriendlyConfigName = "停止命令",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.StopCommand"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_FILE,
                 GetValueHandler = p => p.StopCommand,
                 SetValueHandler = (p, val) => { p.StopCommand = val; },
@@ -348,7 +387,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "port",
-                FriendlyConfigName = "端口",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.Port"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_INT,
                 GetValueHandler = p => p.PortNumber.ToString(),
                 SetValueHandler = (p, val) =>
@@ -361,12 +400,12 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "requirement_command",
-                FriendlyConfigName = "依赖检查命令",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.RequirementCommand"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_FILE,
                 ListItems = new List<MetaInformation<LaunchInfoData>.ListItem>
                 {
-                    new MetaInformation<LaunchInfoData>.ListItem { Name = "检查文件是否存在", Value = "CHECK_EXISTANCE" },
-                    new MetaInformation<LaunchInfoData>.ListItem { Name = "不检查依赖", Value = "DO_NOT_CHECK" },
+                    new MetaInformation<LaunchInfoData>.ListItem { Name = AppLocalization.Get("Config.Option.RequirementCheckExistence"), Value = "CHECK_EXISTANCE" },
+                    new MetaInformation<LaunchInfoData>.ListItem { Name = AppLocalization.Get("Config.Option.RequirementDoNotCheck"), Value = "DO_NOT_CHECK" },
                 },
                 GetValueHandler = p => p.RequirementCommand,
                 SetValueHandler = (p, val) => { p.RequirementCommand = val; },
@@ -376,13 +415,13 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "status_check_method",
-                FriendlyConfigName = "运行状态检查",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.StatusCheckMethod"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_LIST,
                 ListItems = new List<MetaInformation<LaunchInfoData>.ListItem>
                 {
-                    new MetaInformation<LaunchInfoData>.ListItem { Name = "检查端口占用", Value = StatusCheckMethodEnum.CHECK_PORT_USAGE },
-                    new MetaInformation<LaunchInfoData>.ListItem { Name = "检查进程是否存在", Value = StatusCheckMethodEnum.CHECK_EXECUTABLE_EXISTANCE },
-                    new MetaInformation<LaunchInfoData>.ListItem { Name = "不检查运行状态", Value = StatusCheckMethodEnum.NO_CHECK }
+                    new MetaInformation<LaunchInfoData>.ListItem { Name = AppLocalization.Get("Config.Option.StatusPortUsage"), Value = StatusCheckMethodEnum.CHECK_PORT_USAGE },
+                    new MetaInformation<LaunchInfoData>.ListItem { Name = AppLocalization.Get("Config.Option.StatusExecutableExistence"), Value = StatusCheckMethodEnum.CHECK_EXECUTABLE_EXISTANCE },
+                    new MetaInformation<LaunchInfoData>.ListItem { Name = AppLocalization.Get("Config.Option.StatusNoCheck"), Value = StatusCheckMethodEnum.NO_CHECK }
                 },
                 GetValueHandler = p => p.StatusCheckMethod,
                 SetValueHandler = (p, val) => { p.SetFieldsFromRawString("status_check_method", val); },
@@ -392,7 +431,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "workdir",
-                FriendlyConfigName = "工作目录",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.Workdir"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_DIRECTORY,
                 GetValueHandler = p => p.WorkingDirectory,
                 SetValueHandler = (p, val) => { p.WorkingDirectory = val; },
@@ -402,7 +441,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "environs",
-                FriendlyConfigName = "环境变量",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.Environs"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING_ARRAY,
                 GetValueHandler = p => string.Join(";", p.GetEnvironsCopy()),
                 GetStringArrayHandler = p => p.GetEnvironsCopy(),
@@ -413,12 +452,12 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "executable_name",
-                FriendlyConfigName = "可执行文件名称",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.ExecutableName"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING,
                 ListItems = new List<MetaInformation<LaunchInfoData>.ListItem>
                 {
-                    new MetaInformation<LaunchInfoData>.ListItem { Name = "填写可执行文件名称", Value = string.Empty },
-                    new MetaInformation<LaunchInfoData>.ListItem { Name = "使用正则表达式(以/开头和结尾)", Value = "//" },
+                    new MetaInformation<LaunchInfoData>.ListItem { Name = AppLocalization.Get("Config.Option.ExecutableNamePrompt"), Value = string.Empty },
+                    new MetaInformation<LaunchInfoData>.ListItem { Name = AppLocalization.Get("Config.Option.ExecutableRegex"), Value = "//" },
                 },
                 GetValueHandler = p => p.ExecutableName,
                 SetValueHandler = (p, val) => { p.ExecutableName = val; },
@@ -428,7 +467,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "run_background",
-                FriendlyConfigName = "在后台运行",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.RunBackground"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_BOOL,
                 GetValueHandler = p => p.RunBackground ? "1" : "0",
                 SetValueHandler = (p, val) => { p.SetFieldsFromRawString("run_background", val); },
@@ -438,7 +477,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "port_click_command",
-                FriendlyConfigName = "端口点击命令",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.PortClickCommand"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING,
                 GetValueHandler = p => p.PortClickCommand,
                 SetValueHandler = (p, val) => { p.PortClickCommand = val; },
@@ -448,7 +487,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "display_bold",
-                FriendlyConfigName = "加粗显示标题",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.DisplayBold"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_BOOL,
                 GetValueHandler = p => p.GetFieldValueString("display_bold"),
                 SetValueHandler = (p, val) => { p.SetFieldsFromRawString("display_bold", val); },
@@ -458,7 +497,7 @@ namespace tbm_launcher
             settingItemConfigs.Add(new MetaInformation<LaunchInfoData>
             {
                 ConfigName = "disabled",
-                FriendlyConfigName = "禁用配置项",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.Disabled"),
                 ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_BOOL,
                 GetValueHandler = p => p.GetFieldValueString("disabled"),
                 SetValueHandler = (p, val) => { p.SetFieldsFromRawString("disabled", val); },
@@ -510,6 +549,8 @@ namespace tbm_launcher
                     config.RawHideOneKeyValue = entry.SystemConfig == null ? null : entry.SystemConfig.RawHideOneKeyValue;
                     config.CheckIntervalSeconds = entry.SystemConfig == null ? 10 : entry.SystemConfig.CheckIntervalSeconds;
                     config.RawCheckIntervalValue = entry.SystemConfig == null ? null : entry.SystemConfig.RawCheckIntervalValue;
+                    config.Language = entry.SystemConfig == null ? AppLocalization.DefaultLanguageCode : entry.SystemConfig.Language;
+                    config.RawLanguageValue = entry.SystemConfig == null ? null : entry.SystemConfig.RawLanguageValue;
                 }
                 else if (entry.ServiceConfig != null)
                 {
@@ -540,7 +581,7 @@ namespace tbm_launcher
         private int FindMaxNewConfig()
         {
             int maxEpoch = 0;
-            Regex pattern = new Regex(@"新建配置项 \((\d+)\)");
+            Regex pattern = new Regex(AppLocalization.Get("Config.NewItemPattern"));
 
             foreach (object conf in listConfig.Items)
             {
@@ -576,12 +617,14 @@ namespace tbm_launcher
                 systemConfig.RawHideOneKeyValue = loadedConfig.RawHideOneKeyValue;
                 systemConfig.CheckIntervalSeconds = loadedConfig.CheckIntervalSeconds;
                 systemConfig.RawCheckIntervalValue = loadedConfig.RawCheckIntervalValue;
+                systemConfig.Language = loadedConfig.Language;
+                systemConfig.RawLanguageValue = loadedConfig.RawLanguageValue;
             }
             catch (LauncherConfigException ex)
             {
                 string errorText = ex.LineNumber > 0
-                    ? "加载原始配置失败: Line " + ex.LineNumber + ": " + ex.Message
-                    : "加载原始配置失败: " + ex.Message;
+                    ? AppLocalization.Format("Config.LoadRawFailedLine", ex.LineNumber, ex.Message)
+                    : AppLocalization.Format("Config.LoadRawFailed", ex.Message);
                 MessageBox.Show(errorText);
                 loadedConfig = new LauncherAppConfig();
                 systemConfig.Title = loadedConfig.Title;
@@ -589,16 +632,20 @@ namespace tbm_launcher
                 systemConfig.RawHideOneKeyValue = loadedConfig.RawHideOneKeyValue;
                 systemConfig.CheckIntervalSeconds = loadedConfig.CheckIntervalSeconds;
                 systemConfig.RawCheckIntervalValue = loadedConfig.RawCheckIntervalValue;
+                systemConfig.Language = loadedConfig.Language;
+                systemConfig.RawLanguageValue = loadedConfig.RawLanguageValue;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("加载原始配置失败: " + ex.Message);
+                MessageBox.Show(AppLocalization.Format("Config.LoadRawFailed", ex.Message));
                 loadedConfig = new LauncherAppConfig();
                 systemConfig.Title = loadedConfig.Title;
                 systemConfig.HideOneKey = loadedConfig.HideOneKey;
                 systemConfig.RawHideOneKeyValue = loadedConfig.RawHideOneKeyValue;
                 systemConfig.CheckIntervalSeconds = loadedConfig.CheckIntervalSeconds;
                 systemConfig.RawCheckIntervalValue = loadedConfig.RawCheckIntervalValue;
+                systemConfig.Language = loadedConfig.Language;
+                systemConfig.RawLanguageValue = loadedConfig.RawLanguageValue;
             }
         }
 
@@ -627,7 +674,18 @@ namespace tbm_launcher
 
         private void UpdateWindowTitle()
         {
-            Text = "Configure " + (systemConfig.Title ?? string.Empty);
+            Text = AppLocalization.Format("Config.WindowTitle", systemConfig.Title ?? string.Empty);
+        }
+
+        private void ApplyLocalizedText()
+        {
+            button1.Text = AppLocalization.Get("Common.Save");
+            btn_launch.Text = AppLocalization.Get("Common.Cancel");
+            button4.Text = AppLocalization.Get("Common.Preview");
+            label3.Text = AppLocalization.Get("Config.Field.Title");
+            panel_config.Text = AppLocalization.Get("Config.PanelTitle");
+            UpdateWindowTitle();
+            listConfig.Invalidate();
         }
 
         protected override void OnAfterDpiChanged(int oldDpi, int newDpi)

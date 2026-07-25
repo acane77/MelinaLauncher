@@ -14,6 +14,7 @@ namespace tbm_launcher
         [STAThread]
         static void Main(string[] args)
         {
+            AppLocalization.SetLanguage(AppLocalization.DefaultLanguageCode);
             DpiHelper.InitializeProcessDpiAwareness();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -23,13 +24,7 @@ namespace tbm_launcher
                     ProgramGlobalConfig.StartWithConfigureFlag = true;
                 else if (arg == "-h")
                 {
-                    MessageBox.Show(
-                        "Usage: tbm_launcher [-c]\r\n" +
-                        "\r\n" +
-                        "Options:\r\n" +
-                        "  -c, --config     Open configure window\r\n" +
-                        "  -h               Print this help message" +
-                        "");
+                    MessageBox.Show(AppLocalization.Get("Program.HelpText"));
                     return;
                 }
             }

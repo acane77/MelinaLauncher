@@ -80,7 +80,7 @@
     <Compile Include="FormConfigure.Designer.cs">
       <DependentUpon>FormConfigure.cs</DependentUpon>
     </Compile>
-    <Compile Include="FormStringArrayEditor.cs">
+    <Compile Include="FormStringArrayEditorLocalized.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="LauncherInfo.cs" />
@@ -91,6 +91,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="IniConfigReader.cs" />
+    <Compile Include="Localization.cs" />
     <Compile Include="MetaInformation.cs" />
     <Compile Include="Port.cs" />
     <Compile Include="Program.cs" />

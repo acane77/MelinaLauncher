@@ -25,6 +25,8 @@ namespace tbm_launcher
         public string RawHideOneKeyValue;
         public int CheckIntervalSeconds = 10;
         public string RawCheckIntervalValue;
+        public string Language = AppLocalization.DefaultLanguageCode;
+        public string RawLanguageValue;
         public List<LaunchInfoData> Items = new List<LaunchInfoData>();
 
         public void SetSystemFieldFromString(string settingName, string value)
@@ -56,21 +58,31 @@ namespace tbm_launcher
                         break;
                     }
 
-                    throw new LauncherConfigException("system.hide_one_key 必须是 true/false 或 1/0。");
+                    throw new LauncherConfigException(AppLocalization.Get("ConfigFile.SystemHideOneKeyMustBeBoolean"));
                 case "chk_interval":
                     RawCheckIntervalValue = value;
                     int parsedSeconds;
                     if (!Int32.TryParse(value, out parsedSeconds))
                     {
-                        throw new LauncherConfigException("system.chk_interval 必须是整数。");
+                        throw new LauncherConfigException(AppLocalization.Get("ConfigFile.SystemChkIntervalMustBeInteger"));
                     }
 
                     if (parsedSeconds <= 0)
                     {
-                        throw new LauncherConfigException("system.chk_interval 必须大于 0。");
+                        throw new LauncherConfigException(AppLocalization.Get("ConfigFile.SystemChkIntervalMustBePositive"));
                     }
 
                     CheckIntervalSeconds = parsedSeconds;
+                    break;
+                case "language":
+                    RawLanguageValue = value;
+                    string normalizedLanguage;
+                    if (!AppLocalization.TryNormalizeLanguage(value, out normalizedLanguage))
+                    {
+                        throw new LauncherConfigException(AppLocalization.Get("ConfigFile.SystemLanguageInvalid"));
+                    }
+
+                    Language = normalizedLanguage;
                     break;
             }
         }
@@ -99,6 +111,10 @@ namespace tbm_launcher
                         CheckIntervalSeconds = 10;
                     }
                     break;
+                case "language":
+                    RawLanguageValue = value;
+                    Language = AppLocalization.NormalizeLanguage(value);
+                    break;
             }
         }
 
@@ -112,6 +128,8 @@ namespace tbm_launcher
                     return RawHideOneKeyValue ?? (HideOneKey ? "1" : "0");
                 case "chk_interval":
                     return RawCheckIntervalValue ?? CheckIntervalSeconds.ToString();
+                case "language":
+                    return RawLanguageValue ?? Language;
             }
 
             return string.Empty;
@@ -163,6 +181,7 @@ namespace tbm_launcher
             builder.Append("title = ").AppendLine(ToTomlString(config.Title ?? string.Empty));
             builder.Append("hide_one_key = ").AppendLine(SerializeBooleanValue(config.GetSystemFieldValueString("hide_one_key")));
             builder.Append("chk_interval = ").AppendLine(SerializePositiveIntegerValue(config.GetSystemFieldValueString("chk_interval"), 10));
+            builder.Append("language = ").AppendLine(ToTomlString(AppLocalization.NormalizeLanguage(config.GetSystemFieldValueString("language"))));
 
             foreach (LaunchInfoData item in config.Items)
             {
@@ -211,7 +230,7 @@ namespace tbm_launcher
         {
             if (config == null)
             {
-                throw new LauncherConfigException("配置对象为空。");
+                throw new LauncherConfigException(AppLocalization.Get("ConfigFile.ConfigObjectNull"));
             }
 
             ValidateSystemSettingsForSave(config);
@@ -222,12 +241,12 @@ namespace tbm_launcher
                 string validationMessage;
                 if (!TryValidateSectionName(item.SectionName, out validationMessage))
                 {
-                    throw new LauncherConfigException("配置标识 " + (item.SectionName ?? "<empty>") + " 无效: " + validationMessage);
+                    throw new LauncherConfigException(AppLocalization.Format("ConfigFile.SectionIdentifierInvalid", item.SectionName ?? "<empty>", validationMessage));
                 }
 
                 if (!usedSections.Add(item.SectionName))
                 {
-                    throw new LauncherConfigException("配置标识重复: " + item.SectionName);
+                    throw new LauncherConfigException(AppLocalization.Format("ConfigFile.SectionIdentifierDuplicate", item.SectionName));
                 }
             }
         }
@@ -236,19 +255,19 @@ namespace tbm_launcher
         {
             if (string.IsNullOrWhiteSpace(sectionName))
             {
-                message = "不能为空。";
+                message = AppLocalization.Get("ConfigFile.SectionNameEmpty");
                 return false;
             }
 
             if (string.Equals(sectionName, ProgramGlobalConfig.SystemSectionName, StringComparison.OrdinalIgnoreCase))
             {
-                message = "不能使用保留名称 system。";
+                message = AppLocalization.Get("ConfigFile.SectionNameReserved");
                 return false;
             }
 
             if (!SectionNameRegex.IsMatch(sectionName))
             {
-                message = "只能包含字母、数字、下划线和短横线。";
+                message = AppLocalization.Get("ConfigFile.SectionNamePattern");
                 return false;
             }
 
@@ -346,7 +365,7 @@ namespace tbm_launcher
                 {
                     if (!knownSections.Add(sectionName))
                     {
-                        throw new LauncherConfigException("重复的 section: " + sectionName, lineNumber);
+                        throw new LauncherConfigException(AppLocalization.Format("ConfigFile.DuplicateSection", sectionName), lineNumber);
                     }
 
                     currentSection = sectionName;
@@ -359,7 +378,7 @@ namespace tbm_launcher
                         string validationMessage;
                         if (!TryValidateSectionName(sectionName, out validationMessage))
                         {
-                            throw new LauncherConfigException("无效的 section 名称: " + sectionName + "。" + validationMessage, lineNumber);
+                            throw new LauncherConfigException(AppLocalization.Format("ConfigFile.InvalidSectionName", sectionName, validationMessage), lineNumber);
                         }
 
                         currentItem = new LaunchInfoData();
@@ -372,14 +391,14 @@ namespace tbm_launcher
 
                 if (string.IsNullOrWhiteSpace(currentSection))
                 {
-                    throw new LauncherConfigException("配置文件格式错误，需要先声明 section。", lineNumber);
+                    throw new LauncherConfigException(AppLocalization.Get("ConfigFile.SectionRequiredBeforeProperties"), lineNumber);
                 }
 
                 string key;
                 string rawValue;
                 if (!TrySplitKeyValueLine(line, out key, out rawValue))
                 {
-                    throw new LauncherConfigException("配置项格式错误。", lineNumber);
+                    throw new LauncherConfigException(AppLocalization.Get("ConfigFile.InvalidConfigEntryFormat"), lineNumber);
                 }
 
                 string loweredKey = key.Trim().ToLowerInvariant();
@@ -405,7 +424,7 @@ namespace tbm_launcher
                         List<string> environs;
                         if (!TryParseStringArray(rawValue, out environs))
                         {
-                            throw new LauncherConfigException("environs 需要是字符串数组。", lineNumber);
+                            throw new LauncherConfigException(AppLocalization.Get("ConfigFile.EnvironsMustBeStringArray"), lineNumber);
                         }
                         currentItem.SetEnvirons(environs);
                     }
@@ -628,7 +647,7 @@ namespace tbm_launcher
             string parsed;
             if (!TryParseScalarValue(rawValue, out parsed))
             {
-                throw new LauncherConfigException("无法解析配置值。", lineNumber);
+                throw new LauncherConfigException(AppLocalization.Get("ConfigFile.CannotParseValue"), lineNumber);
             }
             return parsed;
         }
@@ -945,14 +964,21 @@ namespace tbm_launcher
             string hideOneKeyValue = config.GetSystemFieldValueString("hide_one_key") ?? string.Empty;
             if (!IsSupportedBooleanText(hideOneKeyValue))
             {
-                throw new LauncherConfigException("system.hide_one_key 必须是 true/false 或 1/0。");
+                throw new LauncherConfigException(AppLocalization.Get("ConfigFile.SystemHideOneKeyMustBeBoolean"));
             }
 
             string intervalValue = config.GetSystemFieldValueString("chk_interval") ?? string.Empty;
             int parsedSeconds;
             if (!Int32.TryParse(intervalValue, out parsedSeconds) || parsedSeconds <= 0)
             {
-                throw new LauncherConfigException("system.chk_interval 必须是大于 0 的整数。");
+                throw new LauncherConfigException(AppLocalization.Get("ConfigFile.SystemChkIntervalMustBePositiveInteger"));
+            }
+
+            string languageValue = config.GetSystemFieldValueString("language") ?? string.Empty;
+            string normalizedLanguage;
+            if (!AppLocalization.TryNormalizeLanguage(languageValue, out normalizedLanguage))
+            {
+                throw new LauncherConfigException(AppLocalization.Get("ConfigFile.SystemLanguageInvalid"));
             }
         }
 

@@ -14,6 +14,7 @@ namespace tbm_launcher
         {
             InitializeComponent();
             InitializeDpiAwareness();
+            ApplyLocalizedText();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -107,6 +108,8 @@ namespace tbm_launcher
             {
                 EnsureConfigFileExists();
                 LauncherAppConfig config = LauncherConfigFile.Load(ProgramGlobalConfig.ConfigFilePath);
+                AppLocalization.SetLanguage(config.Language);
+                ApplyLocalizedText();
 
                 int visibleIndex = 0;
                 for (int index = 0; index < config.Items.Count; index++)
@@ -135,8 +138,8 @@ namespace tbm_launcher
             catch (LauncherConfigException ex)
             {
                 string errorText = ex.LineNumber > 0
-                    ? "加载配置文件失败: Line " + ex.LineNumber + ": " + ex.Message
-                    : "加载配置文件失败: " + ex.Message;
+                    ? AppLocalization.Format("Main.LoadConfigFailedLine", ex.LineNumber, ex.Message)
+                    : AppLocalization.Format("Main.LoadConfigFailed", ex.Message);
                 MessageBox.Show(errorText);
                 label1.Text = Text = ProgramGlobalConfig.DefaultApplicationTitle;
                 btn_launch.Visible = true;
@@ -145,7 +148,7 @@ namespace tbm_launcher
             }
             catch (Exception ex)
             {
-                MessageBox.Show("加载配置文件失败:" + ex.Message);
+                MessageBox.Show(AppLocalization.Format("Main.LoadConfigFailed", ex.Message));
                 label1.Text = Text = ProgramGlobalConfig.DefaultApplicationTitle;
                 btn_launch.Visible = true;
                 btn_stop.Visible = true;
@@ -174,6 +177,13 @@ namespace tbm_launcher
             {
                 serviceItem.ApplyDpi(CurrentDpi);
             }
+        }
+
+        private void ApplyLocalizedText()
+        {
+            btn_launch.Text = AppLocalization.Get("Main.BatchStart");
+            btn_stop.Text = AppLocalization.Get("Main.BatchStop");
+            button1.Text = AppLocalization.Get("Main.Refresh");
         }
     }
 }
