@@ -83,6 +83,9 @@
     <Compile Include="FormStringArrayEditorLocalized.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FormStringMapEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="LauncherInfo.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>

@@ -38,6 +38,8 @@ namespace tbm_launcher
         public delegate void SetValueT(ValueType valueObj, string value);
         public delegate IList<string> GetStringArrayT(ValueType valueObj);
         public delegate void SetStringArrayT(ValueType valueObj, IList<string> value);
+        public delegate IDictionary<string, string> GetStringMapT(ValueType valueObj);
+        public delegate void SetStringMapT(ValueType valueObj, IDictionary<string, string> value);
         public delegate string GetReferenceSectionNameT(ValueType valueObj);
         public delegate string ValueFillHandlerT(string configName, ValueType valueType);
         public Validator<string> ValidateInputHandler = null;
@@ -45,6 +47,8 @@ namespace tbm_launcher
         public SetValueT SetValueHandler = null;
         public GetStringArrayT GetStringArrayHandler = null;
         public SetStringArrayT SetStringArrayHandler = null;
+        public GetStringMapT GetStringMapHandler = null;
+        public SetStringMapT SetStringMapHandler = null;
         public GetReferenceSectionNameT GetReferenceSectionNameHandler = null;
         public static ValueFillHandlerT ValueFillHandler = null;
 
@@ -56,6 +60,7 @@ namespace tbm_launcher
         public const int CONFIG_TYPE_BOOL = 6;
         public const int CONFIG_TYPE_DIRECTORY = 7;
         public const int CONFIG_TYPE_STRING_ARRAY = 8;
+        public const int CONFIG_TYPE_STRING_MAP = 9;
         public string ConfigName;
         public string FriendlyConfigName;
         public int ConfigType;
@@ -344,6 +349,42 @@ namespace tbm_launcher
                         var items = dialog.GetItems();
                         settingItem.SetStringArrayHandler?.Invoke(info, items);
                         valueCtrl.Text = string.Join(";", items);
+                    }
+                };
+                additionalButton = button;
+            }
+            else if (settingItem.ConfigType == CONFIG_TYPE_STRING_MAP)
+            {
+                TextBox valueCtrl = new TextBox();
+                valueCtrl.ReadOnly = true;
+                valueCtrl.Text = value;
+                valueControl = valueCtrl;
+
+                int additionalButtonWidth = 50;
+                int scaledAdditionalButtonWidth = DpiHelper.ScaleValue(additionalButtonWidth, currentDpi);
+                int additionalButtonHeight = DpiHelper.ScaleValue(28, currentDpi);
+                int baseAdditionalButtonRight = baseValueRight;
+                baseValueRight += scaledAdditionalButtonWidth;
+
+                Button button = new Button();
+                button.Text = AppLocalization.Get("Common.Edit");
+                button.Location = new Point(
+                    container.ClientSize.Width - baseAdditionalButtonRight - scaledAdditionalButtonWidth,
+                    baseHeight - DpiHelper.ScaleValue(3, currentDpi));
+                button.FlatStyle = FlatStyle.System;
+                button.Size = new Size(scaledAdditionalButtonWidth, additionalButtonHeight);
+                button.Click += (object _s, EventArgs _e) =>
+                {
+                    var dialog = new FormStringMapEditor();
+                    dialog.Text = settingItem.FriendlyConfigName;
+                    dialog.SetItems(settingItem.GetStringMapHandler == null
+                        ? new Dictionary<string, string>()
+                        : settingItem.GetStringMapHandler(info));
+                    if (dialog.ShowDialog(container.FindForm()) == DialogResult.OK)
+                    {
+                        IDictionary<string, string> items = dialog.GetItems();
+                        settingItem.SetStringMapHandler?.Invoke(info, items);
+                        valueCtrl.Text = LauncherConfigFile.FormatStringMap(items);
                     }
                 };
                 additionalButton = button;

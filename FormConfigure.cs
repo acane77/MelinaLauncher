@@ -35,6 +35,7 @@ namespace tbm_launcher
             public string RawCheckIntervalValue;
             public string Language = AppLocalization.DefaultLanguageCode;
             public string RawLanguageValue;
+            public Dictionary<string, string> Variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             public string GetFieldValueString(string configName)
             {
@@ -56,6 +57,11 @@ namespace tbm_launcher
                 if (string.Equals(configName, "language", StringComparison.OrdinalIgnoreCase))
                 {
                     return RawLanguageValue ?? Language;
+                }
+
+                if (string.Equals(configName, "var", StringComparison.OrdinalIgnoreCase))
+                {
+                    return LauncherConfigFile.FormatStringMap(Variables);
                 }
 
                 return string.Empty;
@@ -315,6 +321,19 @@ namespace tbm_launcher
                     p.RawHideOneKeyValue = val;
                     p.HideOneKey = string.Equals(val, "1", StringComparison.Ordinal)
                         || string.Equals(val, "true", StringComparison.OrdinalIgnoreCase);
+                },
+                GetReferenceSectionNameHandler = p => ProgramGlobalConfig.SystemSectionName
+            });
+            systemSettingConfigs.Add(new MetaInformation<SystemConfigData>
+            {
+                ConfigName = "var",
+                FriendlyConfigName = AppLocalization.Get("Config.Field.Variables"),
+                ConfigType = MetaInformation<SystemConfigData>.CONFIG_TYPE_STRING_MAP,
+                GetValueHandler = p => LauncherConfigFile.FormatStringMap(p.Variables),
+                GetStringMapHandler = p => new Dictionary<string, string>(p.Variables, StringComparer.OrdinalIgnoreCase),
+                SetStringMapHandler = (p, val) =>
+                {
+                    p.Variables = new Dictionary<string, string>(val ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase);
                 },
                 GetReferenceSectionNameHandler = p => ProgramGlobalConfig.SystemSectionName
             });
@@ -634,6 +653,9 @@ namespace tbm_launcher
                     config.RawCheckIntervalValue = entry.SystemConfig == null ? null : entry.SystemConfig.RawCheckIntervalValue;
                     config.Language = entry.SystemConfig == null ? AppLocalization.DefaultLanguageCode : entry.SystemConfig.Language;
                     config.RawLanguageValue = entry.SystemConfig == null ? null : entry.SystemConfig.RawLanguageValue;
+                    config.Variables = entry.SystemConfig == null
+                        ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                        : new Dictionary<string, string>(entry.SystemConfig.Variables, StringComparer.OrdinalIgnoreCase);
                 }
                 else if (entry.ServiceConfig != null)
                 {
@@ -702,6 +724,7 @@ namespace tbm_launcher
                 systemConfig.RawCheckIntervalValue = loadedConfig.RawCheckIntervalValue;
                 systemConfig.Language = loadedConfig.Language;
                 systemConfig.RawLanguageValue = loadedConfig.RawLanguageValue;
+                systemConfig.Variables = new Dictionary<string, string>(loadedConfig.Variables, StringComparer.OrdinalIgnoreCase);
             }
             catch (LauncherConfigException ex)
             {
@@ -717,6 +740,7 @@ namespace tbm_launcher
                 systemConfig.RawCheckIntervalValue = loadedConfig.RawCheckIntervalValue;
                 systemConfig.Language = loadedConfig.Language;
                 systemConfig.RawLanguageValue = loadedConfig.RawLanguageValue;
+                systemConfig.Variables = new Dictionary<string, string>(loadedConfig.Variables, StringComparer.OrdinalIgnoreCase);
             }
             catch (Exception ex)
             {
@@ -729,6 +753,7 @@ namespace tbm_launcher
                 systemConfig.RawCheckIntervalValue = loadedConfig.RawCheckIntervalValue;
                 systemConfig.Language = loadedConfig.Language;
                 systemConfig.RawLanguageValue = loadedConfig.RawLanguageValue;
+                systemConfig.Variables = new Dictionary<string, string>(loadedConfig.Variables, StringComparer.OrdinalIgnoreCase);
             }
         }
 

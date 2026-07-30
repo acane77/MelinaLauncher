@@ -27,6 +27,7 @@ namespace tbm_launcher
         public string RawCheckIntervalValue;
         public string Language = AppLocalization.DefaultLanguageCode;
         public string RawLanguageValue;
+        public Dictionary<string, string> Variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public List<LaunchInfoData> Items = new List<LaunchInfoData>();
 
         public void SetSystemFieldFromString(string settingName, string value)
@@ -84,6 +85,8 @@ namespace tbm_launcher
 
                     Language = normalizedLanguage;
                     break;
+                case "var":
+                    break;
             }
         }
 
@@ -115,6 +118,8 @@ namespace tbm_launcher
                     RawLanguageValue = value;
                     Language = AppLocalization.NormalizeLanguage(value);
                     break;
+                case "var":
+                    break;
             }
         }
 
@@ -130,6 +135,8 @@ namespace tbm_launcher
                     return RawCheckIntervalValue ?? CheckIntervalSeconds.ToString();
                 case "language":
                     return RawLanguageValue ?? Language;
+                case "var":
+                    return LauncherConfigFile.FormatStringMap(Variables);
             }
 
             return string.Empty;
@@ -248,6 +255,10 @@ namespace tbm_launcher
             builder.Append("hide_one_key = ").AppendLine(SerializeBooleanValue(config.GetSystemFieldValueString("hide_one_key")));
             builder.Append("chk_interval = ").AppendLine(SerializePositiveIntegerValue(config.GetSystemFieldValueString("chk_interval"), 10));
             builder.Append("language = ").AppendLine(ToTomlString(AppLocalization.NormalizeLanguage(config.GetSystemFieldValueString("language"))));
+            if (config.Variables != null && config.Variables.Count > 0)
+            {
+                builder.Append("var = ").AppendLine(SerializeStringMap(config.Variables));
+            }
 
             foreach (LaunchInfoData item in config.Items)
             {
@@ -507,6 +518,17 @@ namespace tbm_launcher
 
                 if (string.Equals(currentSection, ProgramGlobalConfig.SystemSectionName, StringComparison.OrdinalIgnoreCase))
                 {
+                    if (loweredKey == "var")
+                    {
+                        Dictionary<string, string> variables;
+                        if (!TryParseStringMap(rawValue, out variables))
+                        {
+                            throw new LauncherConfigException(AppLocalization.Get("ConfigFile.CannotParseValue"), lineNumber);
+                        }
+                        config.Variables = variables;
+                        continue;
+                    }
+
                     string value = ParseScalarValue(rawValue, lineNumber);
                     if (preserveRawValues)
                     {
@@ -599,6 +621,25 @@ namespace tbm_launcher
                     continue;
                 }
 
+                Dictionary<string, string> parsedMap;
+                if (TryParseStringMap(rawValue, out parsedMap))
+                {
+                    string currentKey = currentSection + "." + key.Trim();
+                    string formattedMap = FormatStringMap(parsedMap);
+                    values[currentKey] = formattedMap;
+                    if (string.Equals(currentSection, ProgramGlobalConfig.SystemSectionName, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(key.Trim(), "var", StringComparison.OrdinalIgnoreCase))
+                    {
+                        values["system.vars"] = formattedMap;
+                        foreach (KeyValuePair<string, string> item in parsedMap)
+                        {
+                            values["system.vars," + item.Key] = item.Value;
+                            values["system.var," + item.Key] = item.Value;
+                        }
+                    }
+                    continue;
+                }
+
                 string parsedValue;
                 if (!TryParseScalarValue(rawValue, out parsedValue))
                 {
@@ -620,6 +661,29 @@ namespace tbm_launcher
             for (int index = 0; index < lines.Length; index++)
             {
                 string originalLine = lines[index];
+                string key;
+                string rawValue;
+                if (string.Equals(currentSection, ProgramGlobalConfig.SystemSectionName, StringComparison.OrdinalIgnoreCase)
+                    && TrySplitKeyValueLine(originalLine, out key, out rawValue)
+                    && string.Equals(key, "var", StringComparison.OrdinalIgnoreCase))
+                {
+                    Dictionary<string, string> map;
+                    if (TryParseStringMap(rawValue, out map))
+                    {
+                        foreach (string mapKey in map.Keys.ToList())
+                        {
+                            string mapValue = map[mapKey] ?? string.Empty;
+                            map[mapKey] = PlaceholderRegex.Replace(mapValue, match =>
+                            {
+                                string resolved = ResolveToken(match.Groups[1].Value, currentSection, values);
+                                return resolved ?? match.Value;
+                            });
+                        }
+                        output.Add(key + " = " + SerializeStringMap(map));
+                        continue;
+                    }
+                }
+
                 string expandedLine = PlaceholderRegex.Replace(originalLine, match =>
                 {
                     string token = match.Groups[1].Value;
@@ -866,6 +930,98 @@ namespace tbm_launcher
             return true;
         }
 
+        private static bool TryParseStringMap(string rawValue, out Dictionary<string, string> parsedValues)
+        {
+            parsedValues = null;
+            string trimmed = StripInlineComment(rawValue).Trim();
+            if (!trimmed.StartsWith("{", StringComparison.Ordinal) || !trimmed.EndsWith("}", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            string content = trimmed.Substring(1, trimmed.Length - 2).Trim();
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (content.Length == 0)
+            {
+                parsedValues = result;
+                return true;
+            }
+
+            var rawItems = new List<string>();
+            var currentItem = new StringBuilder();
+            bool inDoubleQuote = false;
+            bool inSingleQuote = false;
+            bool escaping = false;
+            for (int index = 0; index < content.Length; index++)
+            {
+                char ch = content[index];
+                currentItem.Append(ch);
+                if (escaping)
+                {
+                    escaping = false;
+                    continue;
+                }
+                if (ch == '\\' && inDoubleQuote)
+                {
+                    escaping = true;
+                    continue;
+                }
+                if (ch == '"' && !inSingleQuote)
+                {
+                    inDoubleQuote = !inDoubleQuote;
+                    continue;
+                }
+                if (ch == '\'' && !inDoubleQuote)
+                {
+                    inSingleQuote = !inSingleQuote;
+                    continue;
+                }
+                if (ch == ',' && !inDoubleQuote && !inSingleQuote)
+                {
+                    rawItems.Add(currentItem.ToString(0, currentItem.Length - 1));
+                    currentItem.Clear();
+                }
+            }
+
+            if (inDoubleQuote || inSingleQuote || escaping || currentItem.Length == 0)
+            {
+                return false;
+            }
+            rawItems.Add(currentItem.ToString());
+
+            foreach (string rawItem in rawItems)
+            {
+                string key;
+                string value;
+                if (!TrySplitKeyValueLine(rawItem, out key, out value))
+                {
+                    return false;
+                }
+
+                string parsedKey = string.Empty;
+                string trimmedKey = key.Trim();
+                if ((trimmedKey.StartsWith("\"", StringComparison.Ordinal) || trimmedKey.StartsWith("'", StringComparison.Ordinal))
+                    && !TryParseScalarValue(trimmedKey, out parsedKey))
+                {
+                    return false;
+                }
+                if (trimmedKey.StartsWith("\"", StringComparison.Ordinal) || trimmedKey.StartsWith("'", StringComparison.Ordinal))
+                {
+                    key = parsedKey;
+                }
+
+                string parsedValue;
+                if (string.IsNullOrWhiteSpace(key) || !TryParseScalarValue(value, out parsedValue) || result.ContainsKey(key))
+                {
+                    return false;
+                }
+                result.Add(key, parsedValue);
+            }
+
+            parsedValues = result;
+            return true;
+        }
+
         private static bool TryParseDoubleQuotedString(string rawValue, out string parsedValue)
         {
             parsedValue = string.Empty;
@@ -1015,6 +1171,16 @@ namespace tbm_launcher
         private static string ToTomlStringArray(IEnumerable<string> values)
         {
             return "[" + string.Join(", ", (values ?? Enumerable.Empty<string>()).Select(ToTomlString)) + "]";
+        }
+
+        public static string FormatStringMap(IDictionary<string, string> values)
+        {
+            return string.Join(";", (values ?? new Dictionary<string, string>()).Select(item => (item.Key ?? string.Empty) + "=" + (item.Value ?? string.Empty)));
+        }
+
+        private static string SerializeStringMap(IDictionary<string, string> values)
+        {
+            return "{ " + string.Join(", ", (values ?? new Dictionary<string, string>()).Select(item => ToTomlString(item.Key ?? string.Empty) + " = " + ToTomlString(item.Value ?? string.Empty))) + " }";
         }
 
         private static string SerializePortValue(LaunchInfoData item)
