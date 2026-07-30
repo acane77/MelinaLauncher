@@ -114,6 +114,9 @@ namespace tbm_launcher
                         { "Config.Option.StatusNoCheck", "Do Not Check Running Status" },
                         { "Config.Option.ExecutableNamePrompt", "Enter executable name" },
                         { "Config.Option.ExecutableRegex", "Use regular expression (start and end with /)" },
+                        { "Config.Option.PortClickOpenBrowser", "Open In Browser: {0} ({1})" },
+                        { "Config.Option.PortClickOpenBrowserDefault", "Open In Browser ({0})" },
+                        { "Config.Option.Default", "Default" },
 
                         { "StringArrayEditor.Title", "Edit String Array" },
 
@@ -229,6 +232,9 @@ namespace tbm_launcher
                         { "Config.Option.StatusNoCheck", "不检查运行状态" },
                         { "Config.Option.ExecutableNamePrompt", "填写可执行文件名称" },
                         { "Config.Option.ExecutableRegex", "使用正则表达式（以/开头和结尾）" },
+                        { "Config.Option.PortClickOpenBrowser", "在浏览器打开：{0}（{1}）" },
+                        { "Config.Option.PortClickOpenBrowserDefault", "在浏览器打开（{0}）" },
+                        { "Config.Option.Default", "默认" },
 
                         { "StringArrayEditor.Title", "编辑字符串数组" },
 
@@ -344,6 +350,9 @@ namespace tbm_launcher
                         { "Config.Option.StatusNoCheck", "不檢查執行狀態" },
                         { "Config.Option.ExecutableNamePrompt", "填寫可執行檔名稱" },
                         { "Config.Option.ExecutableRegex", "使用正則表達式（以/開頭和結尾）" },
+                        { "Config.Option.PortClickOpenBrowser", "在瀏覽器開啟：{0}（{1}）" },
+                        { "Config.Option.PortClickOpenBrowserDefault", "在瀏覽器開啟（{0}）" },
+                        { "Config.Option.Default", "預設" },
 
                         { "StringArrayEditor.Title", "編輯字串陣列" },
 
@@ -459,6 +468,9 @@ namespace tbm_launcher
                         { "Config.Option.StatusNoCheck", "実行状態を確認しない" },
                         { "Config.Option.ExecutableNamePrompt", "実行ファイル名を入力" },
                         { "Config.Option.ExecutableRegex", "正規表現を使用（/で開始・終了）" },
+                        { "Config.Option.PortClickOpenBrowser", "ブラウザーで開く: {0}（{1}）" },
+                        { "Config.Option.PortClickOpenBrowserDefault", "ブラウザーで開く（{0}）" },
+                        { "Config.Option.Default", "既定" },
 
                         { "StringArrayEditor.Title", "文字列配列を編集" },
 

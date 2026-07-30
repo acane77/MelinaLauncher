@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -9,6 +12,7 @@ namespace tbm_launcher
 {
     public partial class FormConfigure : DpiAwareForm
     {
+        private const string PortCommandPortPlaceholder = "{this.port}";
         private readonly List<MetaInformation<LaunchInfoData>> settingItemConfigs = new List<MetaInformation<LaunchInfoData>>();
         private readonly List<MetaInformation<SystemConfigData>> systemSettingConfigs = new List<MetaInformation<SystemConfigData>>();
         private LauncherAppConfig loadedConfig = new LauncherAppConfig();
@@ -478,7 +482,9 @@ namespace tbm_launcher
             {
                 ConfigName = "port_click_command",
                 FriendlyConfigName = AppLocalization.Get("Config.Field.PortClickCommand"),
-                ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_STRING,
+                ConfigType = MetaInformation<LaunchInfoData>.CONFIG_TYPE_FILE,
+                IsListEditable = true,
+                ListItems = GetPortClickCommandOptions(),
                 GetValueHandler = p => p.PortClickCommand,
                 SetValueHandler = (p, val) => { p.PortClickCommand = val; },
                 GetReferenceSectionNameHandler = p => p.SectionName
@@ -505,6 +511,83 @@ namespace tbm_launcher
             });
 
             MetaInformation<LaunchInfoData>.ValueFillHandler = LaunchInfoData.GetFieldValueString;
+        }
+
+        private static List<MetaInformation<LaunchInfoData>.ListItem> GetPortClickCommandOptions()
+        {
+            try
+            {
+                var options = new List<MetaInformation<LaunchInfoData>.ListItem>();
+                var seenAddresses = new HashSet<IPAddress>();
+                bool hasLoopbackAddress = false;
+
+                foreach (NetworkInterface networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (networkInterface.OperationalStatus != OperationalStatus.Up
+                        && networkInterface.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                    {
+                        continue;
+                    }
+
+                    IPInterfaceProperties properties = networkInterface.GetIPProperties();
+                    foreach (UnicastIPAddressInformation unicastAddress in properties.UnicastAddresses)
+                    {
+                        IPAddress address = unicastAddress.Address;
+                        if (address.AddressFamily != AddressFamily.InterNetwork || !seenAddresses.Add(address))
+                        {
+                            continue;
+                        }
+
+                        bool isLoopback = IPAddress.Loopback.Equals(address);
+                        string interfaceName = string.IsNullOrWhiteSpace(networkInterface.Description)
+                            ? networkInterface.Name
+                            : networkInterface.Description;
+                        string addressText = address.ToString();
+                        string displayName = AppLocalization.Format(
+                            "Config.Option.PortClickOpenBrowser",
+                            addressText,
+                            interfaceName);
+                        if (isLoopback)
+                        {
+                            displayName += " (" + AppLocalization.Get("Config.Option.Default") + ")";
+                        }
+
+                        var option = new MetaInformation<LaunchInfoData>.ListItem
+                        {
+                            Name = displayName,
+                            Value = "explorer http://" + addressText + ":" + PortCommandPortPlaceholder
+                        };
+                        if (isLoopback)
+                        {
+                            hasLoopbackAddress = true;
+                            options.Insert(0, option);
+                        }
+                        else
+                        {
+                            options.Add(option);
+                        }
+                    }
+                }
+
+                if (hasLoopbackAddress)
+                {
+                    return options;
+                }
+            }
+            catch
+            {
+            }
+
+            return new List<MetaInformation<LaunchInfoData>.ListItem>
+            {
+                new MetaInformation<LaunchInfoData>.ListItem
+                {
+                    Name = AppLocalization.Format(
+                        "Config.Option.PortClickOpenBrowserDefault",
+                        AppLocalization.Get("Config.Option.Default")),
+                    Value = "explorer http://" + IPAddress.Loopback + ":" + PortCommandPortPlaceholder
+                }
+            };
         }
 
         private void RenderConfigItemList()

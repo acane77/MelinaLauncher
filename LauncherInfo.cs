@@ -852,7 +852,7 @@ namespace tbm_launcher
             {
                 if (!string.IsNullOrWhiteSpace(PortClickCommand))
                 {
-                    StartDetachedCommand(PortClickCommand);
+                    StartDetachedCommand(PortClickCommand.Replace("{this.port}", Port.ToString()));
                     return;
                 }
 

@@ -60,6 +60,7 @@ namespace tbm_launcher
         public string FriendlyConfigName;
         public int ConfigType;
         public List<ListItem> ListItems;
+        public bool IsListEditable;
 
         private static bool TryParseNumericValue(string rawValue, bool allowDecimal, out decimal parsedValue)
         {
@@ -271,7 +272,9 @@ namespace tbm_launcher
                     dropDownList.Tag = settingItem.ListItems;
                     if (selectedIndex >= 0)
                     {
-                        dropDownList.DropDownStyle = ComboBoxStyle.DropDownList;
+                        dropDownList.DropDownStyle = settingItem.IsListEditable
+                            ? ComboBoxStyle.DropDown
+                            : ComboBoxStyle.DropDownList;
                         dropDownList.SelectedIndex = selectedIndex;
                     }
                     else
