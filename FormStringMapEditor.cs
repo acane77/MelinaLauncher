@@ -49,8 +49,8 @@ namespace tbm_launcher
             gridItems.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             gridItems.BackgroundColor = Color.White;
             gridItems.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            gridItems.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Key", Name = "columnKey", FillWeight = 35F });
-            gridItems.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Value", Name = "columnValue", FillWeight = 65F });
+            gridItems.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = AppLocalization.Get("StringMapEditor.Key"), Name = "columnKey", FillWeight = 35F });
+            gridItems.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = AppLocalization.Get("StringMapEditor.Value"), Name = "columnValue", FillWeight = 65F });
             gridItems.EditMode = DataGridViewEditMode.EditOnEnter;
             gridItems.Location = new Point(12, 12);
             gridItems.MultiSelect = false;

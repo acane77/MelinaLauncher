@@ -120,6 +120,8 @@ namespace tbm_launcher
                         { "Config.Option.Default", "Default" },
 
                         { "StringArrayEditor.Title", "Edit String Array" },
+                        { "StringMapEditor.Key", "Key" },
+                        { "StringMapEditor.Value", "Value" },
 
                         { "Service.StatusRetrieving", "Retrieving..." },
                         { "Service.StatusRunning", "Running" },
@@ -239,6 +241,8 @@ namespace tbm_launcher
                         { "Config.Option.Default", "默认" },
 
                         { "StringArrayEditor.Title", "编辑字符串数组" },
+                        { "StringMapEditor.Key", "\u952e" },
+                        { "StringMapEditor.Value", "\u503c" },
 
                         { "Service.StatusRetrieving", "获取运行信息..." },
                         { "Service.StatusRunning", "正在运行" },
@@ -358,6 +362,8 @@ namespace tbm_launcher
                         { "Config.Option.Default", "預設" },
 
                         { "StringArrayEditor.Title", "編輯字串陣列" },
+                        { "StringMapEditor.Key", "\u9375" },
+                        { "StringMapEditor.Value", "\u503c" },
 
                         { "Service.StatusRetrieving", "取得執行資訊..." },
                         { "Service.StatusRunning", "正在執行" },
@@ -477,6 +483,8 @@ namespace tbm_launcher
                         { "Config.Option.Default", "既定" },
 
                         { "StringArrayEditor.Title", "文字列配列を編集" },
+                        { "StringMapEditor.Key", "\u30ad\u30fc" },
+                        { "StringMapEditor.Value", "\u5024" },
 
                         { "Service.StatusRetrieving", "状態取得中..." },
                         { "Service.StatusRunning", "実行中" },

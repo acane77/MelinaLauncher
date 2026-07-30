@@ -74,11 +74,11 @@ namespace tbm_launcher
             switch (AppLocalization.CurrentLanguageCode)
             {
                 case AppLanguageCodes.SimplifiedChinese:
-                    return "\u8bbe\u7f6e(&S) ...";
+                    return "\u8bbe\u7f6e(&S)...";
                 case AppLanguageCodes.TraditionalChinese:
-                    return "\u8a2d\u5b9a(&S) ...";
+                    return "\u8a2d\u5b9a(&S)...";
                 case AppLanguageCodes.Japanese:
-                    return "\u8a2d\u5b9a(&S) ...";
+                    return "\u8a2d\u5b9a(&S)...";
                 default:
                     return "&Settings...";
             }
