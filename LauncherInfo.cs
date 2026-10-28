@@ -296,6 +296,8 @@ namespace tbm_launcher
         private const int DesignChangePortLeft = 420;
         private const int DesignButtonWidth = 75;
         private const int DesignButtonHeight = 23;
+        private const int DesignIconSize = 16;
+        private const int DesignIconGap = 4;
 
         public class RunningStatus
         {
@@ -311,6 +313,7 @@ namespace tbm_launcher
         private Label Ctrl_Status;
         private Label Ctrl_Name;
         private Label Ctrl_Port;
+        private PictureBox Ctrl_Icon;
         private Button Ctrl_Launch;
         private Button Ctrl_ChangePort;
         private Button Ctrl_InstallRequirement;
@@ -397,6 +400,18 @@ namespace tbm_launcher
             Ctrl_InstallRequirement.FlatStyle = FlatStyle.System;
             container.Controls.Add(Ctrl_InstallRequirement);
 
+            Bitmap icon = LaunchItemIconCache.Resolve(Data.Command, Data.WorkingDirectory, Data.ExecutableName, Data.PortNumber);
+            if (icon != null)
+            {
+                Ctrl_Icon = new PictureBox();
+                Ctrl_Icon.Image = icon;
+                Ctrl_Icon.SizeMode = PictureBoxSizeMode.Zoom;
+                Ctrl_Icon.BackColor = container.BackColor;
+                Ctrl_Icon.TabStop = false;
+                Ctrl_Icon.Margin = new Padding(0);
+                container.Controls.Add(Ctrl_Icon);
+            }
+
             ApplyDpi(DpiHelper.GetDpiForControl(container));
             RetriveRunningInformation();
         }
@@ -481,9 +496,26 @@ namespace tbm_launcher
                 DpiHelper.ScaleValue(DesignButtonWidth, effectiveDpi),
                 DpiHelper.ScaleValue(DesignButtonHeight, effectiveDpi));
 
+            int nameLeft = DpiHelper.ScaleValue(DesignNameLeft, effectiveDpi);
+            if (Ctrl_Icon != null)
+            {
+                int iconSize = DpiHelper.ScaleValue(DesignIconSize, effectiveDpi);
+                int iconGap = DpiHelper.ScaleValue(DesignIconGap, effectiveDpi);
+                int iconTop = textTop + (Ctrl_ParentControl.Font.Height - iconSize) / 2;
+                if (iconTop < rowTop)
+                {
+                    iconTop = rowTop;
+                }
+                Ctrl_Icon.Location = new Point(nameLeft, iconTop);
+                Ctrl_Icon.Size = new Size(iconSize, iconSize);
+                int indent = iconSize + iconGap;
+                nameLeft += indent;
+                nameWidth = Math.Max(0, nameWidth - indent);
+            }
+
             if (Ctrl_Name != null)
             {
-                Ctrl_Name.Location = new Point(DpiHelper.ScaleValue(DesignNameLeft, effectiveDpi), textTop);
+                Ctrl_Name.Location = new Point(nameLeft, textTop);
                 Ctrl_Name.Size = new Size(nameWidth, labelHeight);
                 Ctrl_Name.Font = DisplayBold
                     ? new Font(Ctrl_ParentControl.Font, Ctrl_ParentControl.Font.Style | FontStyle.Bold)

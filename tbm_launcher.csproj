@@ -98,6 +98,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="IniConfigReader.cs" />
+    <Compile Include="LaunchItemIconCache.cs" />
     <Compile Include="Localization.cs" />
     <Compile Include="MetaInformation.cs" />
     <Compile Include="Port.cs" />
@@ -135,6 +136,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Settings_16x.png" />
+    <None Include="Resources\shell32-1112.ico" />
+    <None Include="Resources\shell32-175.ico" />
+    <None Include="Resources\shell32-633.ico" />
+    <None Include="Resources\shell32-625.ico" />
+    <None Include="Resources\shell32-71.ico" />
+    <None Include="Resources\shell32-1498.ico" />
+    <None Include="Resources\shell32-641.ico" />
+    <None Include="Resources\shell32-87.ico" />
     <None Include="Resources\del.png" />
     <None Include="Resources\add2.png" />
     <None Include="Resources\copy.png" />
